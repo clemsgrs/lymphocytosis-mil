@@ -13,9 +13,11 @@ def run_training(clf, trainer, data_module):
     data_module.inference_dataset_reference = data_module.train_dataset
     inference_metrics = trainer.test(clf, datamodule=data_module)[0]
     data_module.train_dataset_reference = data_module.train_dataset
+    data_module.validation_dataset_reference = data_module.val_dataset
     trainer.fit(clf, datamodule=data_module)
     training_metrics = clf.training_metrics
-    return inference_metrics, training_metrics
+    validation_metrics = clf.validation_metrics
+    return inference_metrics, training_metrics, validation_metrics
 
 
 if __name__ == '__main__':
@@ -29,9 +31,15 @@ if __name__ == '__main__':
 
     model = SimpleCNN()
     clf = MILModel(model)
-    trainer = Trainer(reload_dataloaders_every_epoch=True, callbacks=[ProgressBar()])
+    trainer = Trainer(
+        reload_dataloaders_every_epoch=True, 
+        check_val_every_n_epoch=1,
+        weights_save_path='checkpoints/exp1',
+        callbacks=[ProgressBar()])
 
     all_training_metrics = []
+    all_validation_metrics = []
     for epoch in range(5):
-        inference_metrics, training_metrics = run_training(clf, trainer, data_module)
+        inference_metrics, training_metrics, validation_metrics = run_training(clf, trainer, data_module)
         all_training_metrics.append(training_metrics)
+        all_validation_metrics.append(validation_metrics)

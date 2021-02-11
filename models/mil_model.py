@@ -39,7 +39,7 @@ class MILModel(LightningModule):
         probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.train_dataset_reference.dataset,
             indices,
-            prob_col_name='prob',
+            prob_col_name='trained_prob',
             group='id'
         )
         acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
@@ -53,6 +53,40 @@ class MILModel(LightningModule):
         self.training_log_epoch += 1
         self.training_metrics = {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
 
+    def validation_step(self, batch, batch_idx):
+        index, image, label = batch
+        output = torch.sigmoid(self(image))
+        loss = self.loss(output, label.float())
+        self.logger.log_metrics({'Validation/Step Loss': loss}, step=self.validation_log_step)
+        self.validation_log_step += 1
+        return {'index': index, 'prob': output, 'label': label, 'loss': loss}
+
+    def validation_epoch_end(self, outputs):
+        outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs
+        self.trainer.datamodule.validation_dataset_reference.dataset.loc[indices, 'validation_prob'] = probs
+        self.topk_indices = self.topk_processor(
+            self.trainer.datamodule.validation_dataset_reference.dataset,
+            prob_col_name='validation_prob',
+            group='id'
+        )
+        probs, preds, labels = self.topk_processor.aggregate(
+            self.trainer.datamodule.validation_dataset_reference.dataset,
+            self.topk_indices,
+            prob_col_name='validation_prob',
+            group='id'
+        )
+        acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
+        self.logger.log_metrics(
+            {
+                f'Validation/Epoch {k}': v for k, v in
+                {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
+            },
+            self.validation_log_epoch
+        )
+        self.validation_log_epoch += 1
+        self.validation_metrics = {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+    
     def test_step(self, batch, batch_idx):
         index, image, label = batch
         output = torch.sigmoid(self(image))
@@ -64,16 +98,16 @@ class MILModel(LightningModule):
     def test_epoch_end(self, outputs):
         outputs = self.all_gather_outputs(outputs)
         loss, indices, probs, labels = outputs
-        self.trainer.datamodule.inference_dataset_reference.dataset.loc[indices, 'prob'] = probs
+        self.trainer.datamodule.inference_dataset_reference.dataset.loc[indices, 'inference_prob'] = probs
         self.topk_indices = self.topk_processor(
             self.trainer.datamodule.inference_dataset_reference.dataset,
-            prob_col_name='prob',
+            prob_col_name='inference_prob',
             group='id'
         )
         probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.inference_dataset_reference.dataset,
             self.topk_indices,
-            prob_col_name='prob',
+            prob_col_name='inference_prob',
             group='id'
         )
         acc, auc, precision, recall = self.get_metrics(probs, preds, labels)

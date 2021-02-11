@@ -13,7 +13,7 @@ from data.dataset import MILImageDataset
 class MILDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
-            self.train_dataset,
+            self.train_dataset_reference,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             sampler=self.train_sampler
@@ -21,15 +21,16 @@ class MILDataModule(pl.LightningDataModule):
     
     def val_dataloader(self):
         return DataLoader(
-            self.train_datasett,
+            self.validation_dataset_reference,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            shuffle=False,
         )
 
     def test_dataloader(self):
         return DataLoader(
-            self.test_datasett,
-            batch_size=1,
+            self.inference_dataset_reference,
+            batch_size=batch_size,
             num_workers=self.num_workers,
             shuffle=False,
         )
