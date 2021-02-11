@@ -30,7 +30,7 @@ class MILDataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(
             self.inference_dataset_reference,
-            batch_size=batch_size,
+            batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=False,
         )
