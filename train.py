@@ -1,9 +1,9 @@
 from pytorch_lightning import seed_everything, Trainer
 
-from core.callbacks import ProgressBar
-from core.data.data_module import LymphoDataModule
-from core.models.mil_model import MILModel
-from core.models.simple_cnn import SimpleCNN
+from callbacks import ProgressBar
+from data.data_module import LymphoDataModule
+from models.mil_model import MILModel
+from models.simple_cnn import SimpleCNN
 
 
 def run_training(clf, trainer, data_module):

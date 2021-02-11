@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from typing import Optional
 
-from core.data.dataset import MILImageDataset
+from data.dataset import MILImageDataset
 
 class MILDataModule(pl.LightningDataModule):
     def train_dataloader(self):
@@ -36,7 +36,7 @@ class LymphoDataModule(MILDataModule):
     
     def get_tiles(row: pd.Series, phase: str):
         patient_id = row['id']
-        patient_dir = Path(self.data_dir, f'{phase}'), f'{patient_id}')
+        patient_dir = Path(self.data_dir, f'{phase}', f'{patient_id}')
         return patient_dir.glob('*.jpg')
 
     def tile_dataframe(df: pd.DataFrame, phase: str):

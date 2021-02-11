@@ -3,9 +3,9 @@ from pytorch_lightning.metrics.functional.classification import accuracy, auroc,
 import torch
 import torch.nn as nn
 
-from core.data.samplers import TopKSampler
-from core.distributed.ops import all_gather_op
-from core.processing import TopKProcessor
+from data.samplers import TopKSampler
+from distributed.ops import all_gather_op
+from processing import TopKProcessor
 
 
 class MILModel(LightningModule):
