@@ -1,0 +1,7 @@
+opencv-python
+pandas
+pytorch-lightning
+sklearn
+torch
+torchvision
+tqdm
