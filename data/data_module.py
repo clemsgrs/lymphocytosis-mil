@@ -6,22 +6,30 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from typing import Optional
+from sklearn.model_selection import train_test_split
 
 from data.dataset import MILImageDataset
 
 class MILDataModule(pl.LightningDataModule):
     def train_dataloader(self):
         return DataLoader(
-            self.train_dataset_reference,
+            self.train_dataset,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             sampler=self.train_sampler
         )
+    
+    def val_dataloader(self):
+        return DataLoader(
+            self.train_datasett,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+        )
 
     def test_dataloader(self):
         return DataLoader(
-            self.inference_dataset_reference,
-            batch_size=self.batch_size,
+            self.test_datasett,
+            batch_size=1,
             num_workers=self.num_workers,
             shuffle=False,
         )
@@ -52,8 +60,11 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
+            train_df, val_df = train_test_split(train_df, test_size=0.2)
             train_df = self.tile_dataframe(train_df, phase='train')
-            train_df.to_csv(Path(self.data_dir, f'train.csv'))
+            val_df = self.tile_dataframe(val_df, phase='train')
+            train_df.to_csv(Path(self.data_dir, f'train.csv'), index=False)
+            val_df.to_csv(Path(self.data_dir, f'val.csv'), index=False)
 
         if Path(self.data_dir, f'test.csv').exists():
             print(f'Loading test slides from file...')
@@ -61,13 +72,15 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             test_df = pd.read_csv(Path(self.data_dir, 'test', 'test_data.csv'))
-            test_df = self.tile_dataframe(train_df, phase='test')
-            test_df.to_csv(Path(self.data_dir, f'test.csv'))
+            test_df = self.tile_dataframe(test_df, phase='test')
+            test_df.to_csv(Path(self.data_dir, f'test.csv'), index=False)
 
-        train_df = train_df.sample(frac=0.005).reset_index()
-        test_df = train_df.sample(frac=0.005).reset_index()
-        self.train_dataset, self.test_dataset = (
+        train_df = train_df.sample(frac=0.01).reset_index()
+        val_df = val_df.sample(frac=0.01).reset_index()
+        test_df = train_df.sample(frac=0.01).reset_index()
+        self.train_dataset, self.val_dataset, self.test_dataset = (
             MILImageDataset(train_df, training=True),
+            MILImageDataset(val_df, training=False),
             MILImageDataset(test_df, training=False)
         )
 
