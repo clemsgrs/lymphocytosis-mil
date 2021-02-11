@@ -52,7 +52,7 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
-            train_df = tile_dataframe(train_df, phase='train')
+            train_df = self.tile_dataframe(train_df, phase='train')
             train_df.to_csv(Path(self.data_dir, f'train.csv'))
 
         if Path(self.data_dir, f'test.csv').exists():
@@ -61,7 +61,7 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             test_df = pd.read_csv(Path(self.data_dir, 'test', 'test_data.csv'))
-            test_df = tile_dataframe(train_df, phase='test')
+            test_df = self.tile_dataframe(train_df, phase='test')
             test_df.to_csv(Path(self.data_dir, f'test.csv'))
 
         train_df = train_df.sample(frac=0.005).reset_index()
