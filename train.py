@@ -1,7 +1,7 @@
 from pytorch_lightning import seed_everything, Trainer
 
 from core.callbacks import ProgressBar
-from core.data.data_module import PCAMDataModule
+from core.data.data_module import LymphoDataModule
 from core.models.mil_model import MILModel
 from core.models.simple_cnn import SimpleCNN
 
@@ -21,7 +21,7 @@ def run_training(clf, trainer, data_module):
 if __name__ == '__main__':
     seed_everything(31)
 
-    data_module = PCAMDataModule('/Users/dilip.thiagarajan/data/pcam/', 128, 0, 48)
+    data_module = LymphoDataModule('/Users/dilip.thiagarajan/data/pcam/', 128, 0, 48)
     data_module.setup()
 
     model = SimpleCNN()
