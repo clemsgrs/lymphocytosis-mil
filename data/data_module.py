@@ -27,12 +27,11 @@ class MILDataModule(pl.LightningDataModule):
         )
 
 class LymphoDataModule(MILDataModule):
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int, phase: str):
+    def __init__(self, data_dir: str, batch_size: int, num_workers: int):
         super(PCAMDataModule, self).__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.phase = phase
     
     def get_tiles(row: pd.Series, phase: str):
         patient_id = row['id']

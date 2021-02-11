@@ -22,7 +22,7 @@ if __name__ == '__main__':
     seed_everything(31)
 
     data_module = LymphoDataModule(
-        data_dir='data/3md3070-dlmi/'
+        data_dir='data/3md3070-dlmi/',
         batch_size=32, 
         num_workers=0)
     data_module.setup()
