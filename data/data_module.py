@@ -33,12 +33,12 @@ class LymphoDataModule(MILDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
     
-    def get_tiles(row: pd.Series, phase: str):
+    def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']
         patient_dir = Path(self.data_dir, f'{phase}', f'{patient_id}')
         return patient_dir.glob('*.jpg')
 
-    def tile_dataframe(df: pd.DataFrame, phase: str):
+    def tile_dataframe(self, df: pd.DataFrame, phase: str):
         df['tiles'] = df.progress_apply(self.get_tiles, axis=1, phase=phase)
         return df.explode('tiles')
 
