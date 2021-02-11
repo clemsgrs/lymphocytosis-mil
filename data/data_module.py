@@ -36,7 +36,7 @@ class LymphoDataModule(MILDataModule):
     def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']
         patient_dir = Path(self.data_dir, f'{phase}', f'{patient_id}')
-        return patient_dir.glob('*.jpg')
+        return list(patient_dir.glob('*.jpg'))
 
     def tile_dataframe(self, df: pd.DataFrame, phase: str):
         df['tiles'] = df.progress_apply(self.get_tiles, axis=1, phase=phase)
