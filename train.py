@@ -21,7 +21,10 @@ def run_training(clf, trainer, data_module):
 if __name__ == '__main__':
     seed_everything(31)
 
-    data_module = LymphoDataModule('/Users/dilip.thiagarajan/data/pcam/', 128, 0, 48)
+    data_module = LymphoDataModule(
+        data_dir='data/3md3070-dlmi/'
+        batch_size=32, 
+        num_workers=0)
     data_module.setup()
 
     model = SimpleCNN()
