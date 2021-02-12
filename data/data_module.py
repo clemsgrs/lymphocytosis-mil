@@ -85,7 +85,7 @@ class LymphoDataModule(MILDataModule):
         self.train_dataset, self.val_dataset, self.test_dataset = (
             MILImageDataset(train_df, training=True),
             MILImageDataset(val_df, training=False),
-            MILImageDataset(test_df, training=False)
+            MILImageDataset(train_df, training=False)
         )
 
     @staticmethod
