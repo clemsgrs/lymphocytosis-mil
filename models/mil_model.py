@@ -2,6 +2,8 @@ from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.metrics.functional.classification import accuracy, auroc, precision_recall
 import torch
 import torch.nn as nn
+import pandas as pd
+from pathlib import Path
 
 from data.samplers import TopKSampler
 from distributed.ops import all_gather_op
@@ -9,13 +11,15 @@ from processing import TopKProcessor
 
 
 class MILModel(LightningModule):
-    def __init__(self, model, topk=2, aggregation='max'):
+    def __init__(self, model, topk=2, aggregation='max', output_dir=''):
         super(MILModel, self).__init__()
         self.model = model
         self.loss = nn.BCELoss()
         self.topk_processor = TopKProcessor(topk=topk, aggregation=aggregation)
         self.training_log_step, self.validation_log_step, self.testing_log_step = 0, 0, 0
         self.training_log_epoch, self.validation_log_epoch, self.testing_log_epoch = 0, 0, 0
+        self.output_dir = output_dir
+        self.compute_test_metrics = True
 
     def forward(self, image):
         return self.model(image)
@@ -33,10 +37,10 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output.detach(), 'label': label, 'loss': loss}
 
     def training_epoch_end(self, outputs):
-        # outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs
         self.trainer.datamodule.train_dataset_reference.dataset.loc[indices.cpu(), 'trained_prob'] = probs.cpu()
-        probs, preds, labels = self.topk_processor.aggregate(
+        _, probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.train_dataset_reference.dataset,
             indices.cpu(),
             prob_col_name='trained_prob',
@@ -62,15 +66,15 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output, 'label': label, 'loss': loss}
 
     def validation_epoch_end(self, outputs):
-        # outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs
         self.trainer.datamodule.validation_dataset_reference.dataset.loc[indices.cpu(), 'validation_prob'] = probs.cpu()
         self.topk_indices = self.topk_processor(
             self.trainer.datamodule.validation_dataset_reference.dataset,
             prob_col_name='validation_prob',
             group='id'
         )
-        probs, preds, labels = self.topk_processor.aggregate(
+        patient_ids, probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.validation_dataset_reference.dataset,
             self.topk_indices,
             prob_col_name='validation_prob',
@@ -96,31 +100,39 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output, 'label': label, 'loss': loss}
 
     def test_epoch_end(self, outputs):
-        # outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs
         self.trainer.datamodule.inference_dataset_reference.dataset.loc[indices.cpu(), 'inference_prob'] = probs.cpu()
+        # self.trainer.datamodule.inference_dataset_reference.dataset.to_csv(Path(self.output_dir, f'inference.csv'), index=False)
         self.topk_indices = self.topk_processor(
             self.trainer.datamodule.inference_dataset_reference.dataset,
             prob_col_name='inference_prob',
             group='id'
         )
-        probs, preds, labels = self.topk_processor.aggregate(
+        patient_ids, probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.inference_dataset_reference.dataset,
             self.topk_indices,
             prob_col_name='inference_prob',
             group='id'
         )
-        acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
-        self.logger.log_metrics(
-            {
-                f'Testing/Epoch {k}': v for k, v in
-                {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
-            },
-            self.testing_log_epoch
-        )
-        self.testing_log_epoch += 1
-        self.trainer.datamodule.train_sampler = TopKSampler(self.topk_indices)
-        return {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+        names = ['id', 'probs', 'preds', 'label']
+        data = [patient_ids, probs.numpy(), preds.numpy(), labels.numpy()]
+        inference_df = pd.DataFrame.from_dict(dict(zip(names, data)))
+        inference_df.to_csv(Path(self.output_dir, f'inference.csv'))
+        if self.compute_test_metrics:
+          acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
+          self.logger.log_metrics(
+              {
+                  f'Testing/Epoch {k}': v for k, v in
+                  {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
+              },
+              self.testing_log_epoch
+          )
+          self.testing_log_epoch += 1
+          self.trainer.datamodule.train_sampler = TopKSampler(self.topk_indices)
+          return {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+        else:
+          return {'acc': 0}
 
     def configure_optimizers(self):
         return torch.optim.AdamW([{'params': self.model.parameters(), 'lr': 1e-3}])
@@ -138,13 +150,21 @@ class MILModel(LightningModule):
                 probs,
                 labels
             )
+        
+        else:
+            return (
+                losses.mean(),
+                indices,
+                probs,
+                labels
+            )
 
-        return (
-            all_gather_op(losses).mean(),
-            all_gather_op(indices),
-            all_gather_op(probs),
-            all_gather_op(labels)
-        )
+        # return (
+        #     all_gather_op(losses).mean(),
+        #     all_gather_op(indices),
+        #     all_gather_op(probs),
+        #     all_gather_op(labels)
+        # )
 
     def get_metrics(self, probs, preds, labels):
         acc = accuracy(preds, labels)

@@ -39,4 +39,5 @@ class TopKProcessor:
         labels = torch.from_numpy(grouped_sub_df.apply(
             lambda gdf: self.aggregation_func(gdf.label)).values
         )
-        return probs, preds, labels
+        patient_ids = np.array(list(grouped_sub_df.groups.keys()))
+        return patient_ids, probs, preds, labels
