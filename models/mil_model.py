@@ -33,12 +33,12 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output.detach(), 'label': label, 'loss': loss}
 
     def training_epoch_end(self, outputs):
-        outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs
-        self.trainer.datamodule.train_dataset_reference.dataset.loc[indices, 'trained_prob'] = probs
+        # outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        self.trainer.datamodule.train_dataset_reference.dataset.loc[indices.cpu(), 'trained_prob'] = probs.cpu()
         probs, preds, labels = self.topk_processor.aggregate(
             self.trainer.datamodule.train_dataset_reference.dataset,
-            indices,
+            indices.cpu(),
             prob_col_name='trained_prob',
             group='id'
         )
@@ -62,9 +62,9 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output, 'label': label, 'loss': loss}
 
     def validation_epoch_end(self, outputs):
-        outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs
-        self.trainer.datamodule.validation_dataset_reference.dataset.loc[indices, 'validation_prob'] = probs
+        # outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        self.trainer.datamodule.validation_dataset_reference.dataset.loc[indices.cpu(), 'validation_prob'] = probs.cpu()
         self.topk_indices = self.topk_processor(
             self.trainer.datamodule.validation_dataset_reference.dataset,
             prob_col_name='validation_prob',
@@ -96,9 +96,9 @@ class MILModel(LightningModule):
         return {'index': index, 'prob': output, 'label': label, 'loss': loss}
 
     def test_epoch_end(self, outputs):
-        outputs = self.all_gather_outputs(outputs)
-        loss, indices, probs, labels = outputs
-        self.trainer.datamodule.inference_dataset_reference.dataset.loc[indices, 'inference_prob'] = probs
+        # outputs = self.all_gather_outputs(outputs)
+        loss, indices, probs, labels = outputs[0]['loss'], outputs[0]['index'], outputs[0]['prob'], outputs[0]['label']
+        self.trainer.datamodule.inference_dataset_reference.dataset.loc[indices.cpu(), 'inference_prob'] = probs.cpu()
         self.topk_indices = self.topk_processor(
             self.trainer.datamodule.inference_dataset_reference.dataset,
             prob_col_name='inference_prob',

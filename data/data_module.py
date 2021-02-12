@@ -55,9 +55,12 @@ class LymphoDataModule(MILDataModule):
         
         tqdm.pandas()
         
-        if Path(self.data_dir, 'train', 'train.csv').exists():
+        if Path(self.data_dir, 'train.csv').exists() and Path(self.data_dir, 'val.csv').exists():
             print(f'Loading train data from file...')
-            train_df = pd.read_csv(Path(self.data_dir, 'train', 'train.csv'))
+            train_df = pd.read_csv(Path(self.data_dir, 'train.csv'))
+            print(f'...done.')
+            print(f'Loading validation data from file...')
+            train_df = pd.read_csv(Path(self.data_dir, 'val.csv'))
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
@@ -76,9 +79,9 @@ class LymphoDataModule(MILDataModule):
             test_df = self.tile_dataframe(test_df, phase='test')
             test_df.to_csv(Path(self.data_dir, f'test.csv'), index=False)
 
-        train_df = train_df.sample(frac=0.01).reset_index()
-        val_df = val_df.sample(frac=0.01).reset_index()
-        test_df = train_df.sample(frac=0.01).reset_index()
+        # train_df = train_df.sample(frac=0.01).reset_index()
+        # val_df = val_df.sample(frac=0.01).reset_index()
+        # test_df = train_df.sample(frac=0.01).reset_index()
         self.train_dataset, self.val_dataset, self.test_dataset = (
             MILImageDataset(train_df, training=True),
             MILImageDataset(val_df, training=False),

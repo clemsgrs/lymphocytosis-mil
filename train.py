@@ -35,6 +35,7 @@ if __name__ == '__main__':
         reload_dataloaders_every_epoch=True, 
         check_val_every_n_epoch=1,
         weights_save_path='checkpoints/exp1',
+        gpus=1,
         callbacks=[ProgressBar()])
 
     all_training_metrics = []
