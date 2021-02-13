@@ -31,7 +31,7 @@ if __name__ == '__main__':
     
     checkpoint_callback = ModelCheckpoint(
         monitor='val_loss',
-        dirpath='my/path/',
+        dirpath='checkpoints/exp1',
         filename='{epoch:02d}-{val_loss:.2f}',
         save_last=True,
         mode='auto'
@@ -42,7 +42,6 @@ if __name__ == '__main__':
     trainer = Trainer(
         reload_dataloaders_every_epoch=True, 
         check_val_every_n_epoch=1,
-        weights_save_path='checkpoints/exp1',
         gpus=1,
         callbacks=[ProgressBar(), checkpoint_callback])
 
