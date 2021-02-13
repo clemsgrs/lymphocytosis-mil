@@ -64,7 +64,7 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
-            train_df, val_df = train_test_split(train_df, test_size=0.2)
+            train_df, val_df = train_test_split(train_df, test_size=0.5)
             train_df = self.tile_dataframe(train_df, phase='train')
             val_df = self.tile_dataframe(val_df, phase='train')
             train_df.to_csv(Path(self.data_dir, f'train.csv'), index=False)
