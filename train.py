@@ -8,10 +8,11 @@ from models.simple_cnn import SimpleCNN
 
 def run_training(clf, trainer, data_module):
     assert trainer.reload_dataloaders_every_epoch
-    print('Setting trainer.max_epochs = 1.')
+    # print('Setting trainer.max_epochs = 1.')
     trainer.max_epochs = 1
     data_module.inference_dataset_reference = data_module.train_dataset
-    inference_metrics = trainer.test(clf, datamodule=data_module)[0]
+    trainer.test(clf, datamodule=data_module)
+    inference_metrics = clf.inference_metrics
     data_module.train_dataset_reference = data_module.train_dataset
     data_module.validation_dataset_reference = data_module.val_dataset
     trainer.fit(clf, datamodule=data_module)

@@ -51,12 +51,12 @@ class MILModel(LightningModule):
         self.logger.log_metrics(
             {
                 f'Training/Epoch {k}': v for k, v in
-                {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
+                {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
             },
             self.training_log_epoch
         )
         self.training_log_epoch += 1
-        self.training_metrics = {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+        self.training_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
 
     def validation_step(self, batch, batch_idx):
         index, image, label = batch
@@ -85,12 +85,12 @@ class MILModel(LightningModule):
         self.logger.log_metrics(
             {
                 f'Validation/Epoch {k}': v for k, v in
-                {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
+                {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
             },
             self.validation_log_epoch
         )
         self.validation_log_epoch += 1
-        self.validation_metrics = {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+        self.validation_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
     
     def test_step(self, batch, batch_idx):
         index, image, label = batch
@@ -125,15 +125,15 @@ class MILModel(LightningModule):
           self.logger.log_metrics(
               {
                   f'Testing/Epoch {k}': v for k, v in
-                  {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
+                  {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}.items()
               },
               self.testing_log_epoch
           )
           self.testing_log_epoch += 1
           self.trainer.datamodule.train_sampler = TopKSampler(self.topk_indices)
-          return {'acc': acc, 'auc': auc, 'precision': precision, 'recall': recall}
+          self.testing_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
         else:
-          return {'acc': 0}
+          self.testing_metrics = {'acc': 0}
 
     def configure_optimizers(self):
         return torch.optim.AdamW([{'params': self.model.parameters(), 'lr': 1e-3}])
