@@ -1,10 +1,10 @@
 from pytorch_lightning import seed_everything, Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint
 
 from callbacks import ProgressBar
 from data.data_module import LymphoDataModule
 from models.mil_model import MILModel
 from models.simple_cnn import SimpleCNN
-
 
 def run_training(clf, trainer, data_module):
     assert trainer.reload_dataloaders_every_epoch
@@ -28,6 +28,14 @@ if __name__ == '__main__':
         batch_size=32, 
         num_workers=0)
     data_module.setup()
+    
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_loss',
+        dirpath='my/path/',
+        filename='{epoch:02d}-{val_loss:.2f}',
+        save_last=True,
+        mode='auto'
+    )
 
     model = SimpleCNN()
     clf = MILModel(model)
@@ -36,7 +44,7 @@ if __name__ == '__main__':
         check_val_every_n_epoch=1,
         weights_save_path='checkpoints/exp1',
         gpus=1,
-        callbacks=[ProgressBar()])
+        callbacks=[ProgressBar(), checkpoint_callback])
 
     all_training_metrics = []
     all_validation_metrics = []

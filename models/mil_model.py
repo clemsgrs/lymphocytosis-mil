@@ -1,5 +1,6 @@
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.metrics.functional.classification import accuracy, auroc, precision_recall
+from pytorch_lightning.metrics.sklearns import BalancedAccuracy
 import torch
 import torch.nn as nn
 import pandas as pd
@@ -46,7 +47,7 @@ class MILModel(LightningModule):
             prob_col_name='trained_prob',
             group='id'
         )
-        acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
+        acc, balanced_acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
         self.logger.log_metrics(
             {
                 f'Training/Epoch {k}': v for k, v in
@@ -80,7 +81,7 @@ class MILModel(LightningModule):
             prob_col_name='validation_prob',
             group='id'
         )
-        acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
+        acc, balanced_acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
         self.logger.log_metrics(
             {
                 f'Validation/Epoch {k}': v for k, v in
@@ -120,7 +121,7 @@ class MILModel(LightningModule):
         inference_df = pd.DataFrame.from_dict(dict(zip(names, data)))
         inference_df.to_csv(Path(self.output_dir, f'inference.csv'))
         if self.compute_test_metrics:
-          acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
+          acc, balanced_acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
           self.logger.log_metrics(
               {
                   f'Testing/Epoch {k}': v for k, v in
@@ -168,6 +169,8 @@ class MILModel(LightningModule):
 
     def get_metrics(self, probs, preds, labels):
         acc = accuracy(preds, labels)
+        b_accuracy = BalancedAccuracy()
+        balanced_acc = b_accuracy(preds, labels)
         auc = auroc(probs, labels)
         precision, recall = precision_recall(preds, labels)
-        return acc.item(), auc.item(), precision.item(), recall.item()
+        return acc.item(), balanced_acc.item(), auc.item(), precision.item(), recall.item()

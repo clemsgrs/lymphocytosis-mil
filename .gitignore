@@ -3,5 +3,4 @@
 .ipynb_checkpoints/*
 lightning_logs/*
 .pytest_cache/*
-*.ipynb
 **/__pycache__/*
