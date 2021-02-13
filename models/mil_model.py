@@ -131,9 +131,9 @@ class MILModel(LightningModule):
           )
           self.testing_log_epoch += 1
           self.trainer.datamodule.train_sampler = TopKSampler(self.topk_indices)
-          self.testing_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
+          self.inference_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
         else:
-          self.testing_metrics = {'acc': 0}
+          self.inference_metrics = {'acc': 0}
 
     def configure_optimizers(self):
         return torch.optim.AdamW([{'params': self.model.parameters(), 'lr': 1e-3}])

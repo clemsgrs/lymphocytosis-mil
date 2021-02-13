@@ -22,11 +22,11 @@ def run_training(clf, trainer, data_module):
 
 
 if __name__ == '__main__':
-    seed_everything(31)
+    seed_everything(21)
 
     data_module = LymphoDataModule(
         data_dir='data/3md3070-dlmi/',
-        batch_size=32, 
+        batch_size=16, 
         num_workers=0)
     data_module.setup()
     
