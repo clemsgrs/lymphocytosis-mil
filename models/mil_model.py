@@ -1,10 +1,10 @@
 from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning.metrics.functional.classification import accuracy, auroc, precision_recall
-from pytorch_lightning.metrics.sklearns import BalancedAccuracy
 import torch
 import torch.nn as nn
 import pandas as pd
 from pathlib import Path
+from sklearn.metrics import balanced_accuracy_score
 
 from data.samplers import TopKSampler
 from distributed.ops import all_gather_op
@@ -169,8 +169,7 @@ class MILModel(LightningModule):
 
     def get_metrics(self, probs, preds, labels):
         acc = accuracy(preds, labels)
-        b_accuracy = BalancedAccuracy()
-        balanced_acc = b_accuracy(preds, labels)
+        balanced_acc = balanced_accuracy_score(preds.numpy(), labels.numpy())
         auc = auroc(probs, labels)
         precision, recall = precision_recall(preds, labels)
         return acc.item(), balanced_acc.item(), auc.item(), precision.item(), recall.item()
