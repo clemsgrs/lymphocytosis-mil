@@ -1,5 +1,5 @@
 from pytorch_lightning.core.lightning import LightningModule
-from pytorch_lightning.metrics.functional.classification import accuracy, auroc, precision_recall
+from torchmetrics.functional import accuracy, auroc, precision_recall
 import torch
 import torch.nn as nn
 import pandas as pd
