@@ -36,11 +36,12 @@ class MILDataModule(pl.LightningDataModule):
         )
 
 class LymphoDataModule(MILDataModule):
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int):
+    def __init__(self, data_dir: str, batch_size: int, num_workers: int, seed: int = 21):
         super(LymphoDataModule, self).__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.seed = seed
     
     def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']
@@ -64,7 +65,7 @@ class LymphoDataModule(MILDataModule):
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
-            train_df, val_df = train_test_split(train_df, test_size=0.5)
+            train_df, val_df = train_test_split(train_df, test_size=0.5, random_state=self.seed)
             train_df = self.tile_dataframe(train_df, phase='train')
             val_df = self.tile_dataframe(val_df, phase='train')
             train_df.to_csv(Path(self.data_dir, f'train.csv'), index=False)

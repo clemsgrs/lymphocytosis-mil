@@ -1,4 +1,5 @@
 import math
+import torch
 import torch.nn as nn
 from collections import OrderedDict
 from torch.utils import model_zoo
@@ -253,17 +254,19 @@ class SENet(nn.Module):
         x = self.layer4(x)
         return x
 
-    def logits(self, x):
+    def logits(self, x, lymph_count):
         x = self.avg_pool(x)
         if self.dropout is not None:
             x = self.dropout(x)
         x = x.view(x.size(0), -1)
+        lymph_count = lymph_count.type(torch.cuda.FloatTensor)
+        x = torch.cat((x, lymph_count), dim=1)
         x = self.last_linear(x)
         return x
 
-    def forward(self, x):
+    def forward(self, x, lymph_count):
         x = self.features(x)
-        x = self.logits(x)
+        x = self.logits(x, lymph_count)
         return x
 
 def initialize_pretrained_model(model, num_classes, settings):

@@ -28,16 +28,13 @@ class MILImageDataset(torch.utils.data.Dataset):
         row = self.dataset.loc[index]
         image_fp = row.tiles
         image = read_image(image_fp)
+        lymph_count = np.array([row.lymph_count]).astype(float)
+        label = np.array([row.label]).astype(float) if self.training else np.array([-1])
         if self.transform:
             image = self.transform(image)
         else:
             image = transforms.functional.to_tensor(image)
-        if self.training:
-            return index, image, np.array([row.label]).astype(float)
-        else:
-            return index, image, np.array([-1.0])  # -1 for missing label
-            # test dataframe should already be filled with -1, but let's keep this 
-            # which will work regardless of what the test's label column is filled with
+        return index, image, lymph_count, label
 
     def __len__(self):
         return len(self.dataset)

@@ -22,16 +22,16 @@ class MILModel(LightningModule):
         self.output_dir = output_dir
         self.compute_test_metrics = True
 
-    def forward(self, image):
-        return self.model(image)
+    def forward(self, image, lymph_count):
+        return self.model(image, lymph_count)
 
     def training_step(self, batch, batch_idx):
-        index, image, label = batch
+        index, image, lymph_count, label = batch
         if batch_idx == 0:
             self.logger.experiment.add_images(
                 'Top-K Images', image, global_step=self.training_log_step
             )
-        output = torch.sigmoid(self(image))
+        output = torch.sigmoid(self(image, lymph_count))
         loss = self.loss(output, label.float())
         self.logger.log_metrics({'Training/Step Loss': loss}, step=self.training_log_step)
         self.training_log_step += 1
@@ -45,7 +45,8 @@ class MILModel(LightningModule):
             self.trainer.datamodule.train_dataset_reference.dataset,
             indices.cpu(),
             prob_col_name='trained_prob',
-            group='id'
+            group='id', 
+            threshold=0.5,
         )
         acc, balanced_acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
         self.logger.log_metrics(
@@ -59,8 +60,8 @@ class MILModel(LightningModule):
         self.training_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
 
     def validation_step(self, batch, batch_idx):
-        index, image, label = batch
-        output = torch.sigmoid(self(image))
+        index, image, lymph_count, label = batch
+        output = torch.sigmoid(self(image, lymph_count))
         loss = self.loss(output, label.float())
         self.logger.log_metrics({'Validation/Step Loss': loss}, step=self.validation_log_step)
         self.validation_log_step += 1
@@ -79,7 +80,8 @@ class MILModel(LightningModule):
             self.trainer.datamodule.validation_dataset_reference.dataset,
             self.topk_indices,
             prob_col_name='validation_prob',
-            group='id'
+            group='id',
+            threshold=0.5,
         )
         acc, balanced_acc, auc, precision, recall = self.get_metrics(probs, preds, labels)
         self.logger.log_metrics(
@@ -93,8 +95,8 @@ class MILModel(LightningModule):
         self.validation_metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
     
     def test_step(self, batch, batch_idx):
-        index, image, label = batch
-        output = torch.sigmoid(self(image))
+        index, image, lymph_count, label = batch
+        output = torch.sigmoid(self(image, lymph_count))
         loss = self.loss(output, label.float())
         self.logger.log_metrics({'Testing/Step Loss': loss}, step=self.testing_log_step)
         self.testing_log_step += 1
@@ -114,7 +116,8 @@ class MILModel(LightningModule):
             self.trainer.datamodule.inference_dataset_reference.dataset,
             self.topk_indices,
             prob_col_name='inference_prob',
-            group='id'
+            group='id',
+            threshold=0.5,
         )
         names = ['id', 'probs', 'preds', 'label']
         data = [patient_ids, probs.numpy(), preds.numpy(), labels.numpy()]
@@ -168,6 +171,7 @@ class MILModel(LightningModule):
         # )
 
     def get_metrics(self, probs, preds, labels):
+        labels = labels.type(torch.IntTensor)
         acc = accuracy(preds, labels)
         balanced_acc = balanced_accuracy_score(labels.numpy(), preds.numpy())
         auc = auroc(probs, labels)
