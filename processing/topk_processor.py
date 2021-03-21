@@ -16,6 +16,7 @@ class TopKProcessor:
         prob_col_name: str = 'prob',
         group: str = 'id'
     ) -> np.ndarray:
+        
         topk_indices = np.hstack(df.groupby(group).apply(
             lambda gdf: gdf.sort_values(prob_col_name, ascending=False).index.values[:self.topk]
         ))
@@ -29,6 +30,7 @@ class TopKProcessor:
         group: str = 'id',
         threshold: float = 0.5
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        
         sub_df = df.loc[np.hstack(indices)]
         grouped_sub_df = sub_df.groupby(group)
         probs = torch.from_numpy(grouped_sub_df.apply(

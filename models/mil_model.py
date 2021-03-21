@@ -1,10 +1,9 @@
-from pytorch_lightning.core.lightning import LightningModule
-from torchmetrics.functional import accuracy, auroc, precision_recall
 import torch
 import torch.nn as nn
 import pandas as pd
 from pathlib import Path
-from sklearn.metrics import balanced_accuracy_score
+from pytorch_lightning.core.lightning import LightningModule
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, precision_score, recall_score
 
 from data.samplers import TopKSampler
 from distributed.ops import all_gather_op
@@ -23,7 +22,7 @@ class MILModel(LightningModule):
         self.compute_test_metrics = True
 
     def forward(self, image, lymph_count):
-        return self.model(image, lymph_count)
+        return self.model(image)
 
     def training_step(self, batch, batch_idx):
         index, image, lymph_count, label = batch
@@ -163,17 +162,12 @@ class MILModel(LightningModule):
                 labels
             )
 
-        # return (
-        #     all_gather_op(losses).mean(),
-        #     all_gather_op(indices),
-        #     all_gather_op(probs),
-        #     all_gather_op(labels)
-        # )
-
     def get_metrics(self, probs, preds, labels):
         labels = labels.type(torch.IntTensor)
-        acc = accuracy(preds, labels)
-        balanced_acc = balanced_accuracy_score(labels.numpy(), preds.numpy())
-        auc = auroc(probs, labels)
-        precision, recall = precision_recall(preds, labels)
-        return acc.item(), balanced_acc.item(), auc.item(), precision.item(), recall.item()
+        probs, preds, labels = probs.numpy(), preds.numpy(), labels.numpy()
+        acc = accuracy_score(labels, preds)
+        balanced_acc = balanced_accuracy_score(labels, preds)
+        auc = roc_auc_score(labels, probs)
+        precision = precision_score(labels, preds)
+        recall = recall_score(labels, preds)
+        return acc, balanced_acc, auc, precision, recall
