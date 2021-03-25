@@ -89,7 +89,7 @@
 	\\
 	Babenko \cite{mil} gives a good example to understand multiple instance learning. Imagine several people, each of them having a key chain that contains a few keys. Some of these people are able to enter a certain room, and some aren’t. The task is to predict whether or not a given key chain can open the door of that room. To solve this problem, one needs to find the exact key that is common to all the \textit{positive} key chains. If one can correctly identify this key, one can also correctly classify an entire key chain - \textit{positive} if it contains the required key, or \textit{negative} if it doesn't.\\
 	\\
-	In this setting, we see that the multiple instance learning framework allows the training of a classifier from weakly labeled data: instead of providing input-label pairs, labels $\ell_b$ are assigned to \emph{sets} or \emph{bags} of instances. In this setting, the true instance labels $\ell_i$ can be thought of as latent variables, as they are not known during training.
+	Hence, the multiple instance learning framework allows the training of a classifier from weakly labeled data: instead of providing input-label pairs, labels $\ell_b$ are assigned to \emph{sets} or \emph{bags} of instances. In this setting, the true instance labels $\ell_i$ can be thought of as latent variables, as they are not known during training.
 	
 	\section{Related Work}
 	
