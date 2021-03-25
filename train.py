@@ -43,6 +43,7 @@ if __name__ == '__main__':
     trainer = Trainer(
         reload_dataloaders_every_epoch=True, 
         check_val_every_n_epoch=1,
+        num_sanity_val_steps=0,
         gpus=1,
         callbacks=[ProgressBar(), checkpoint_callback])
 
