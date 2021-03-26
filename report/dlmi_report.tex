@@ -14,6 +14,8 @@
 \usepackage{subcaption}
 \captionsetup{compatibility=false}
 \usepackage{graphicx}
+\usepackage{fancyvrb}
+
 
 % Include other packages here, before hyperref.
 
@@ -110,6 +112,36 @@
 	\subsection{Custom Aggregation  Function}
 	
 	taking all instances into consideration
+	
+	\section{Architecture}
+	We adopt a simple architecture composed of a ResNet backbone followed by an aggregation module.
+	All images are first passed independently through the backbone. The resulting features are then rearranged into different patients and passed through the aggregation module.
+	As the number of images passed through the backbone is often large, we keep the gradients for only a subset of these images. Pseudo-code for this is provided by Algorithm 1.
+	
+	\begin{Verbatim}[fontsize=\footnotesize, samepage=true]
+B, 3, H, W = image_batch.shape
+max_forward_size = 512
+max_backward_size = 512
+features = []
+i = 0
+# forward images without keeping gradients
+with torch.no_grad():
+  while i < B - max_backward_size:
+    j = min(i+max_forward_size,
+            num_images-max_backward_size)
+    features.append(backbone(images[i:j]))
+    i = j
+# forward image with gradients
+features.append(backbone(images[i:]))
+	\end{Verbatim}
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.9\linewidth]{graphic.pdf}
+	\end{center}
+	\caption{Overview.}
+	\label{fig:overview}
+\end{figure}
 	
 	\section{Results}
 	
