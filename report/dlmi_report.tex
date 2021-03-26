@@ -109,7 +109,7 @@
 	
 	top-$k$ \& bottom-$k$
 	
-	\subsection{Custom Aggregation  Function}
+	\subsection{Custom Aggregation Function}
 	
 	taking all instances into consideration
 	
@@ -142,6 +142,9 @@ features.append(backbone(images[i:]))
 	\caption{Overview.}
 	\label{fig:overview}
 \end{figure}
+
+\subsection{Augmentations}
+As the images are centered on a lymphocyt, we always apply a center crop of size 112 to all aimges (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
 	
 	\section{Results}
 	
