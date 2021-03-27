@@ -87,11 +87,3 @@ class LymphoDataModule(MILDataModule):
             MILImageDataset(val_df, training=True),
             MILImageDataset(train_df, training=False)
         )
-
-    @staticmethod
-    def add_data_specific_args(parent_parser):
-        parser = argparse.ArgumentParser(parents=[parent_parser], add_help=False)
-        parser.add_argument('--data_dir', type=str, default='./')
-        parser.add_argument('--batch_size', type=int, default=128)
-        parser.add_argument('--num_workers', type=int, default=0)
-        return parser
