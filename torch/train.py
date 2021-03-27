@@ -12,7 +12,7 @@ import seaborn as sns
 from pathlib import Path
 from sklearn.metrics import confusion_matrix, classification_report
 
-from models import create_model
+from models import se_resnet50
 from dataset import LymphoDataModule
 from utils import *
 from processing import TopKProcessor
@@ -27,9 +27,9 @@ for k, v in vars(params).items():
     print('%s: %s' % (str(k), str(v)))
 print('-------------- End ----------------')
 
-data_module = LymphoDataModule(params)
+data_module = LymphoDataModule(params.data_dir, seed=params.seed)
 data_module.setup()
-train_dataset, val_dataset, test_dataset = data_module.train_dataset, data_module.val_dataset, data_module.test_dataset
+train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=params.batch_size, shuffle=False)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
 
@@ -37,7 +37,7 @@ topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
 
 ### TRAINING
 
-model = create_model(params)
+model = se_resnet50(num_classes=1)
 optimizer = optim.Adam(model.parameters(), lr=params.lr)
 if params.lr_scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params.lr_step, gamma=0.1)

@@ -1,0 +1,20 @@
+{
+    "data_dir": "../data/3md3070-dlmi/",
+    "seed": 21,
+    "val_size": 0.3,
+    "nepochs": 30,
+    "batch_size": 32,
+    "test_batch_size": 1,
+    "eval_every": 1,
+    "lr": 0.001,
+    "lr_scheduler": true,
+    "lr_step": 15,
+    "tracking": "val_loss",
+    "model": "encoder_decoder",
+    "dropout_p": 0.1,
+    "checkpoint_dir": "checkpoints",
+    "result_dir": "results",
+    "save_csv": false,
+    "topk": 1,
+    "aggregatopn": "mean"
+}

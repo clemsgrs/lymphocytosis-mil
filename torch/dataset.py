@@ -41,9 +41,8 @@ class MILImageDataset(torch.utils.data.Dataset):
 
 
 class LymphoDataModule():
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int, seed: int = 21):
+    def __init__(self, data_dir: str, num_workers: int = 1, seed: int = 21):
         self.data_dir = data_dir
-        self.batch_size = batch_size
         self.num_workers = num_workers
         self.seed = seed
     
@@ -86,17 +85,15 @@ class LymphoDataModule():
 
         train_df = train_df.reset_index()
         val_df = val_df.reset_index()
-        self.train_dataset, self.val_dataset, self.test_dataset = (
+        self.train_dataset, self.val_dataset = (
             MILImageDataset(train_df, training=True),
-            MILImageDataset(val_df, training=True),
-            MILImageDataset(train_df, training=False)
+            MILImageDataset(val_df, training=True)
         )
 
 
 class TestDataModule():
-    def __init__(self, data_dir: str, batch_size: int, num_workers: int, seed: int = 21):
+    def __init__(self, data_dir: str, num_workers: int, seed: int = 21):
         self.data_dir = data_dir
-        self.batch_size = batch_size
         self.num_workers = num_workers
         self.seed = seed
     
