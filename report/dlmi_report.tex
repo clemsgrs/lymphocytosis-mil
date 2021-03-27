@@ -14,6 +14,8 @@
 \usepackage{subcaption}
 \captionsetup{compatibility=false}
 \usepackage{graphicx}
+\usepackage{fancyvrb}
+
 
 % Include other packages here, before hyperref.
 
@@ -113,9 +115,88 @@
 	
 	top-$k$ \& bottom-$k$
 	
-	\subsection{Custom Aggregation  Function}
+	\subsection{Custom Aggregation Function}
 	
 	taking all instances into consideration
+	
+	\section{Architecture}
+	
+	We start from a simple baseline and we evaluate different modifications.
+	For each configuration, we run 10 trainings. Each training has its own seed for initializing the model and splitting the dataset (50/50 split). The 10 seeds are kept the same for each configuration. Each model is trained for 40 epochs with a batch size of 16, resulting in 5 batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the 10 best values of each training, and again average this over all 10 trainings (the average is thus taken over 100 values). We always report 95\% confidence intervals.
+	
+	\subsection{Baseline}
+	We adopt a simple and explainable architecture composed of a ResNet \cite{resnet} backbone followed by an aggregation module.
+	For a given batch of patients, we take all their images and stack them into a batch.
+	This batch is passed independently the backbone, without global pooling. 
+	A $1\times 1$ convolution with one output channel is then applied to the resulting feature maps to obtain pixelwise prediction logits.
+	These logits are rearranged into bags of scores, each bag corresponding to all  prediction for one patient.
+	Finally, the aggregation module transforms each bag of scores into a final patient prediction.
+	
+	It is common that the features are aggregated before being linearly mapped to the final prediction score.
+	In contrast, we apply the aggregation after reducing each feature to a single prediction score. We did not find this to impact the results (and in the case where the aggregation function is linear, both methods are equivalent). Doing so makes the model more interpretable as each pixel of each image is given a score. 
+	
+
+	As the number of images passed through the backbone is often large, we keep the gradients for only a subset of these images. Pseudo-code for this is provided by Algorithm 1.
+	
+	\begin{Verbatim}[fontsize=\footnotesize, samepage=true]
+B, 3, H, W = image_batch.shape
+max_forward_size = 512
+max_backward_size = 512
+features = []
+i = 0
+# forward images without keeping gradients
+with torch.no_grad():
+  while i < B - max_backward_size:
+    j = min(i+max_forward_size,
+            num_images-max_backward_size)
+    features.append(backbone(images[i:j]))
+    i = j
+# forward image with gradients
+features.append(backbone(images[i:]))
+	\end{Verbatim}
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.9\linewidth]{graphic2.pdf}
+	\end{center}
+	\caption{Baseline architecture.}
+	\label{fig:overview}
+\end{figure}
+
+\subsection{Augmentations}
+As the images are centered on a lymphocytes, we always apply a center crop of size 112 to all images (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
+
+\subsection{Backbone Choice}
+We compared three backbones: ResNet18, ResNet34 and ResNet50 \cite{resnet}. We also tried a more recent backbone, EfficientNet \cite{efn}, but did not obtain good results.
+The results are summarized in Figure \ref{fig:resnet}. ResNet18 achieves the best validation balanced accuracy. We use it for all our subsequent experiments.
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.47\linewidth]{resnets_bal_acc.pdf}
+		\includegraphics[width=0.47\linewidth]{resnets_val_loss.pdf}
+	\end{center}
+	\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate 95\% confidence intervals. Shallower seems to be better but the results are not very significative.}
+	\label{fig:resnet}
+\end{figure}
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.47\linewidth]{agg_bal_acc.pdf}
+		\includegraphics[width=0.47\linewidth]{agg_val_loss.pdf}
+	\end{center}
+	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate 95\% confidence intervals.}
+	\label{fig:resnet}
+\end{figure}
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.95\linewidth]{aggreg.pdf}
+	\end{center}
+	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate 95\% confidence intervals.}
+	\label{fig:resnet}
+\end{figure}
+
+\subsection{Number of images}
 	
 	\section{Results}
 	
