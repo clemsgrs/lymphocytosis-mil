@@ -118,8 +118,9 @@
 	\subsection{Aggregation Function}
 	
 	Let us denote all the predictions (logits) for patient $j$ by $\ell_i^j$, $\: i=1 \dots n_j$.
-	To aggregate these predictions, we seek to define some weights $\alpha_i^j$ such that we can compute the final prediction logit for patient $j$ by
+	To aggregate these predictions, we seek to define some weights $\alpha_i^j \geq 0$ such that we can compute the final prediction logit for patient $j$ by
 	$$\ell^j = \sum_{i=1}^{n_j} \alpha_i^j \ell_i^j$$
+	(we assume that $\sum_i \alpha_i^j = 1$).
 	The confidence score is then given by applying the sigmoid function: $y_j = \sigma(l^j)$.
 	Two very common aggregation functions are the arithmetic mean and the maximum, where we would respectively set $\alpha_i^j = 1/n_j$ and $\alpha_i^j = \left\{ 1 \text{ if } \ell_i^j = \max_k \ell_k^j \text{ and } 0 \text{ otherwise}\right\}$.
 	
@@ -133,6 +134,22 @@
 	$$\mu = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \ell_i^j$$
 	$$V = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \left(\ell_i^j - \mu \right)^2$$
 	where $B$ is the batch size. Intuitively, $\alpha_i^j$ is small when $\ell_i^j$ is small compared to the rest of the batch, i.e, when it is likely to be a negative sample.
+	
+	\begin{Verbatim}[fontsize=\footnotesize, samepage=true]
+# PyTorch like code for our aggregation function
+logits = conv(features) # 1 channel
+weights = bn(logits.detach())
+weighted_logits = weights * logits
+y = sigmoid(weighted_logits.sum() / weights.sum())
+	\end{Verbatim}
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.95\linewidth]{aggreg_2.pdf}
+	\end{center}
+	\caption{The distribution of the batch normalized logits over a bag is shown in blue. The red sigmoid shows the weight that is associated to each logit. The smaller the logit, the smaller the weight.}
+	\label{fig:resnet}
+\end{figure}
 	
 	\section{Architecture}
 	
@@ -203,13 +220,7 @@ The results are summarized in Figure \ref{fig:resnet}. ResNet18 achieves the bes
 	\label{fig:resnet}
 \end{figure}
 
-\begin{figure}[t]
-	\begin{center}
-		\includegraphics[width=0.95\linewidth]{aggreg.pdf}
-	\end{center}
-	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate 95\% confidence intervals.}
-	\label{fig:resnet}
-\end{figure}
+
 
 \subsection{Number of images}
 	
