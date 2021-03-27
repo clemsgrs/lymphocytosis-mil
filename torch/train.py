@@ -37,7 +37,8 @@ topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
 
 ### TRAINING
 
-model = se_resnet50(num_classes=1)
+model = se_resnet50()
+model.fc = nn.Linear(2048, 1)
 optimizer = optim.Adam(model.parameters(), lr=params.lr)
 if params.lr_scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params.lr_step, gamma=0.1)

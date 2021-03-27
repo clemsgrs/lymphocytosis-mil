@@ -16,5 +16,5 @@
     "result_dir": "results",
     "save_csv": false,
     "topk": 1,
-    "aggregatopn": "mean"
+    "aggregation": "mean"
 }
