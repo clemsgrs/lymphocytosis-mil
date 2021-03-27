@@ -6,6 +6,8 @@ import pandas as pd
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
+from samplers import TopKSampler
+
 
 class AttrDict(dict):
     def __init__(self, *args, **kwargs):
@@ -30,8 +32,8 @@ def epoch_time(start_time, end_time):
 def run_inference(epoch, model, inference_loader, criterion, topk_processor, params, threshold=0.5):
 
     model.eval()
-    instance_indices = [-1] * len(train_loader.dataset)
-    probs = torch.FloatTensor(len(train_loader.dataset))
+    instance_indices = [-1] * len(inference_loader.dataset)
+    probs = torch.FloatTensor(len(inference_loader.dataset))
 
     with tqdm(inference_loader,
               desc=(f'Train - Epoch: {epoch}'),
@@ -69,8 +71,8 @@ def run_inference(epoch, model, inference_loader, criterion, topk_processor, par
         )
 
         metrics = get_metrics(probs, preds, labels)
-        metrics = {m: v / len(val_loader) for m,v in metrics.items()}
-        avg_loss = epoch_loss / len(val_loader)
+        metrics = {m: v / len(inference_loader) for m,v in metrics.items()}
+        avg_loss = epoch_loss / len(inference_loader)
         train_sampler = TopKSampler(topk_indices)
 
         return avg_loss, metrics, train_sampler

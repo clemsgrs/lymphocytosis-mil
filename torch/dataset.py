@@ -7,6 +7,7 @@ from pathlib import Path
 from functools import lru_cache
 from torchvision import transforms
 from typing import Callable, Union
+from sklearn.model_selection import train_test_split
 
 
 @lru_cache(maxsize=256)
@@ -43,9 +44,10 @@ class MILImageDataset(torch.utils.data.Dataset):
 
 
 class LymphoDataModule():
-    def __init__(self, data_dir: str, num_workers: int = 1, seed: int = 21):
+    def __init__(self, data_dir: str, num_workers: int = 1, val_size: float = 0.3, seed: int = 21):
         self.data_dir = data_dir
         self.num_workers = num_workers
+        self.val_size = val_size
         self.seed = seed
     
     def get_tiles(self, row: pd.Series, phase: str):
@@ -70,7 +72,7 @@ class LymphoDataModule():
             print(f'...done.')
         else:
             train_df = pd.read_csv(Path(self.data_dir, 'train', 'train_data.csv'))
-            train_df, val_df = train_test_split(train_df, test_size=0.5, random_state=self.seed)
+            train_df, val_df = train_test_split(train_df, test_size=self.val_size, random_state=self.seed)
             train_df = self.tile_dataframe(train_df, phase='train')
             val_df = self.tile_dataframe(val_df, phase='train')
             train_df.to_csv(Path(self.data_dir, f'train.csv'), index=False)
