@@ -4,3 +4,9 @@
 lightning_logs/*
 .pytest_cache/*
 **/__pycache__/*
+report/dlmi_report.aux
+report/dlmi_report.blg
+report/dlmi_report.log
+report/dlmi_report.synctex.gz
+report/dlmi_report.brf
+report/dlmi_report.bbl
