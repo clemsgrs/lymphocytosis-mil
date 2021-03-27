@@ -29,7 +29,7 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
-def run_inference(epoch, model, inference_loader, criterion, topk_processor, params, threshold=0.5):
+def run_inference(epoch, model, inference_loader, df, criterion, topk_processor, params, threshold=0.5):
 
     model.eval()
     instance_indices = [-1] * len(inference_loader.dataset)

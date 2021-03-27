@@ -18,17 +18,17 @@ def read_image(image_fp: str) -> Image:
 class MILImageDataset(torch.utils.data.Dataset):
     def __init__(
         self,
-        dataset: pd.DataFrame,
+        df: pd.DataFrame,
         training: bool = True,
         transform: Callable = None
     ):
-        self.dataset = dataset
+        self.df = df
         self.training = training
         self.transform = transform
 
     @lru_cache(maxsize=4096)
     def __getitem__(self, index: int):
-        row = self.dataset.loc[index]
+        row = self.df.loc[index]
         image_fp = row.tiles
         image = read_image(image_fp)
         lymph_count = np.array([row.lymph_count]).astype(float)
@@ -40,7 +40,7 @@ class MILImageDataset(torch.utils.data.Dataset):
         return index, image, lymph_count, label
 
     def __len__(self):
-        return len(self.dataset)
+        return len(self.df)
 
 
 class LymphoDataModule():
