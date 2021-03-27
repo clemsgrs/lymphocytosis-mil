@@ -267,7 +267,7 @@ class SENet(nn.Module):
     def forward(self, x, lymph_count):
         x = self.features(x)
         x = self.logits(x, lymph_count)
-        return x
+        return torch.sigmoid(x)
 
 def initialize_pretrained_model(model, num_classes, settings):
     assert num_classes == settings['num_classes'], \

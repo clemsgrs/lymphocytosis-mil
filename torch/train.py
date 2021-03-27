@@ -40,7 +40,7 @@ val_df = val_dataset.df
 ### TRAINING
 
 model = se_resnet50()
-model.fc = nn.Linear(2048, 1)
+model.last_linear = nn.Linear(2049, 1)
 optimizer = optim.Adam(model.parameters(), lr=params.lr)
 if params.lr_scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params.lr_step, gamma=0.1)

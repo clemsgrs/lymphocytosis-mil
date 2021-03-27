@@ -32,11 +32,12 @@ def epoch_time(start_time, end_time):
 def run_inference(epoch, model, inference_loader, df, criterion, topk_processor, params, threshold=0.5):
 
     model.eval()
+    epoch_loss = 0
     instance_indices = [-1] * len(inference_loader.dataset)
     probs = torch.FloatTensor(len(inference_loader.dataset))
 
     with tqdm(inference_loader,
-              desc=(f'Train - Epoch: {epoch}'),
+              desc=(f'Inference - Epoch: {epoch}'),
               unit=' img',
               ncols=80,
               unit_scale=params.batch_size) as t:
@@ -48,11 +49,11 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
                 index, image, lymph_count, label = batch
                 index, image, lymph_count, label = index.cuda(), image.cuda(), lymph_count.cuda(), label.cuda()
                 output = model(image, lymph_count)
-                probs = output.detach()
                 loss = criterion(output, label.float())
-                
-                probs[i*params.batch_size:i*params.batch_size+batch.size(0)] = prob.clone()
-                instance_indices[i*params.batch_size:i*params.batch_size+batch.size(0)] = list(index)
+                prob = output.detach()
+
+                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+                instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
                 
                 epoch_loss += loss.item()
         
@@ -99,8 +100,8 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             output = model(image, lymph_count)
             
             prob = output.detach()
-            probs[i*params.batch_size:i*params.batch_size+batch.size(0)] = prob.clone()
-            instance_indices[i*params.batch_size:i*params.batch_size+batch.size(0)] = list(index)
+            probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+            instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
 
             loss = criterion(output, label.float())
             loss.backward()
@@ -126,8 +127,8 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
 
 def run_validation(epoch, model, val_loader, df, criterion, topk_processor, params, threshold=0.5):
 
-    epoch_loss = 0
     model.eval()
+    epoch_loss = 0
     instance_indices = [-1] * len(train_loader.dataset)
     probs = torch.FloatTensor(len(train_loader.dataset))
 
@@ -144,11 +145,11 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
                 index, image, lymph_count, label = batch
                 index, image, lymph_count, label = index.cuda(), image.cuda(), lymph_count.cuda(), label.cuda()
                 output = model(image, lymph_count)
-                probs = output.detach()
+                prob = output.detach()
                 loss = criterion(output, label.float())
 
-                probs[i*params.batch_size:i*params.batch_size+batch.size(0)] = prob.clone()
-                instance_indices[i*params.batch_size:i*params.batch_size+batch.size(0)] = list(index)
+                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+                instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
                 
                 epoch_loss += loss.item()
         
