@@ -34,7 +34,7 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
 
     model.eval()
     epoch_loss = 0
-    instance_indices = [-1] * len(inference_loader.dataset)
+    instance_indices = []
     probs = torch.FloatTensor(len(inference_loader.dataset))
 
     with tqdm(inference_loader,
@@ -54,7 +54,7 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
                 prob = output.detach()
 
                 probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
-                instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
+                instance_indices.extend(list(index))
                 
                 epoch_loss += loss.item()
         
@@ -84,7 +84,7 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
 
     model.train()
     epoch_loss = 0
-    instance_indices = [-1] * len(train_loader.dataset)
+    instance_indices = []
     probs = torch.FloatTensor(len(train_loader.dataset))
 
     with tqdm(train_loader,
@@ -102,7 +102,7 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             
             prob = output.detach()
             probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
-            instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
+            instance_indices.extend(list(index))
 
             loss = criterion(output, label.float())
             loss.backward()
@@ -110,6 +110,8 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             
             epoch_loss += loss.item()
         
+        print(f'probs.shape: {probs.cpu().numpy().shape}')
+        print(f'len(instance_indices): {len(instance_indices)}')
         df.loc[instance_indices, 'training_prob'] = probs.cpu().numpy()
         patient_ids, probs, preds, labels = topk_processor.aggregate(
             df,
@@ -130,7 +132,7 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
 
     model.eval()
     epoch_loss = 0
-    instance_indices = [-1] * len(train_loader.dataset)
+    instance_indices = []
     probs = torch.FloatTensor(len(train_loader.dataset))
 
     with tqdm(val_loader,
@@ -150,7 +152,7 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
                 loss = criterion(output, label.float())
 
                 probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
-                instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
+                instance_indices.extend(list(index))
                 
                 epoch_loss += loss.item()
         
