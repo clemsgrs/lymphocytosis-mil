@@ -38,7 +38,7 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
     probs = []
 
     with tqdm(inference_loader,
-              desc=(f'Inference - Epoch: {epoch}'),
+              desc=(f'Inference - Epoch {epoch}'),
               unit=' img',
               ncols=80,
               unit_scale=params.batch_size) as t:
@@ -88,7 +88,7 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
     probs = []
 
     with tqdm(train_loader,
-              desc=(f'Train - Epoch: {epoch}'),
+              desc=(f'Train - Epoch {epoch}'),
               unit=' img',
               ncols=80,
               unit_scale=params.batch_size) as t:
@@ -134,7 +134,7 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
     probs = []
 
     with tqdm(val_loader,
-              desc=(f'Validation - Epoch: {epoch}'),
+              desc=(f'Validation - Epoch {epoch}'),
               unit=' img',
               ncols=80,
               unit_scale=params.batch_size) as t:
