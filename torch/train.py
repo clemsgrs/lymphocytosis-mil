@@ -71,7 +71,7 @@ for epoch in range(params.nepochs):
     train_loader = torch.utils.data.DataLoader(
         train_dataset, 
         batch_size=params.batch_size,
-        sampler=self.train_sampler,
+        sampler=train_sampler,
         shuffle=False        
     )
 
