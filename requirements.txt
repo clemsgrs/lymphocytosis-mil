@@ -5,5 +5,4 @@ sklearn
 torch
 torchvision
 tqdm
-torchmetrics
 timm
