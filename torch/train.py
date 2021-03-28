@@ -47,7 +47,7 @@ if params.lr_scheduler:
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=params.lr_step, gamma=0.1)
 model = model.cuda()
 
-criterion = nn.BCELoss()
+criterion = nn.BCEWithLogitsLoss()
 criterion = criterion.cuda()
 
 best_val_loss = float('inf')

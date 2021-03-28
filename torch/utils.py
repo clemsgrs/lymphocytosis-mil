@@ -49,10 +49,10 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
 
                 index, image, lymph_count, label = batch
                 image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
-                output = model(image)
-                loss = criterion(output, label.float())
-                prob = output.detach()
-
+                logits = model(image)
+                loss = criterion(logits, label.float())
+                
+                prob = torch.sigmoid(logits)
                 probs.extend(prob[:,0].clone().tolist())
                 instance_indices.extend(list(index))
                 
@@ -98,15 +98,14 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             optimizer.zero_grad()
             index, image, lymph_count, label = batch
             image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
-            output = model(image)
-            
-            prob = output.detach()
-            probs.extend(prob[:,0].clone().tolist())
-            instance_indices.extend(list(index))
-
-            loss = criterion(output, label.float())
+            logits = model(image)
+            loss = criterion(logits, label.float())
             loss.backward()
             optimizer.step()
+
+            prob = torch.sigmoid(logits)
+            probs.extend(prob[:,0].clone().tolist())
+            instance_indices.extend(list(index))            
             
             epoch_loss += loss.item()
         
@@ -145,10 +144,10 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
 
                 index, image, lymph_count, label = batch
                 image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
-                output = model(image)
-                prob = output.detach()
-                loss = criterion(output, label.float())
-
+                logits = model(image)
+                loss = criterion(logits, label.float())
+                
+                prob = torch.sigmoid(logits)
                 probs.extend(prob[:,0].clone().tolist())
                 instance_indices.extend(list(index))
                 
