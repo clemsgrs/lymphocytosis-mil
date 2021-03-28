@@ -4,6 +4,7 @@ import collections
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from sklearn import metrics
 import matplotlib.pyplot as plt
 
 from samplers import TopKSampler
@@ -47,23 +48,23 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
             for i, batch in enumerate(t):
 
                 index, image, lymph_count, label = batch
-                index, image, lymph_count, label = index.cuda(), image.cuda(), lymph_count.cuda(), label.cuda()
+                image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
                 output = model(image, lymph_count)
                 loss = criterion(output, label.float())
                 prob = output.detach()
 
-                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
                 instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
                 
                 epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'inference_prob'] = probs.cpu()
+        df.loc[instance_indices, 'inference_prob'] = probs.cpu().numpy()
         topk_indices = topk_processor(
             df,
             prob_col_name='inference_prob',
             group='id'
         )
-        patient_ids, probs, preds, labels = self.topk_processor.aggregate(
+        patient_ids, probs, preds, labels = topk_processor.aggregate(
             df,
             topk_indices,
             prob_col_name='inference_prob',
@@ -96,11 +97,11 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
 
             optimizer.zero_grad()
             index, image, lymph_count, label = batch
-            index, image, lymph_count, label = index.cuda(), image.cuda(), lymph_count.cuda(), label.cuda()
+            image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
             output = model(image, lymph_count)
             
             prob = output.detach()
-            probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+            probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
             instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
 
             loss = criterion(output, label.float())
@@ -109,7 +110,7 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             
             epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'training_prob'] = probs.cpu()
+        df.loc[instance_indices, 'training_prob'] = probs.cpu().numpy()
         patient_ids, probs, preds, labels = topk_processor.aggregate(
             df,
             instance_indices,
@@ -143,17 +144,17 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
             for i, batch in enumerate(t):
 
                 index, image, lymph_count, label = batch
-                index, image, lymph_count, label = index.cuda(), image.cuda(), lymph_count.cuda(), label.cuda()
+                image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
                 output = model(image, lymph_count)
                 prob = output.detach()
                 loss = criterion(output, label.float())
 
-                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob.clone()
+                probs[i*params.batch_size:i*params.batch_size+index.size(0)] = prob[:,0].clone()
                 instance_indices[i*params.batch_size:i*params.batch_size+index.size(0)] = list(index)
                 
                 epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'validation_prob'] = probs.cpu()
+        df.loc[instance_indices, 'validation_prob'] = probs.cpu().numpy()
         topk_indices = topk_processor(
             df,
             prob_col_name='validation_prob',
@@ -230,11 +231,11 @@ def get_metrics(probs, preds, labels):
     labels = labels.type(torch.IntTensor)
     probs, preds, labels = probs.numpy(), preds.numpy(), labels.numpy()
     
-    acc = accuracy_score(labels, preds)
-    balanced_acc = balanced_accuracy_score(labels, preds)
-    auc = roc_auc_score(labels, probs)
-    precision = precision_score(labels, preds)
-    recall = recall_score(labels, preds)
+    acc = metrics.accuracy_score(labels, preds)
+    balanced_acc = metrics.balanced_accuracy_score(labels, preds)
+    auc = metrics.roc_auc_score(labels, probs)
+    precision = metrics.precision_score(labels, preds)
+    recall = metrics.recall_score(labels, preds)
     
-    metrics = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
-    return metrics
+    metrics_dict = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
+    return metrics_dict

@@ -27,7 +27,7 @@ for k, v in vars(params).items():
     print('%s: %s' % (str(k), str(v)))
 print('-------------- End ----------------')
 
-data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, seed=params.seed)
+data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, pct=params.pct, seed=params.seed)
 data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
 train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=params.batch_size, shuffle=False)

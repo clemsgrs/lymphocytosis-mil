@@ -44,10 +44,11 @@ class MILImageDataset(torch.utils.data.Dataset):
 
 
 class LymphoDataModule():
-    def __init__(self, data_dir: str, num_workers: int = 1, val_size: float = 0.3, seed: int = 21):
+    def __init__(self, data_dir: str, num_workers: int = 1, val_size: float = 0.3, pct: bool = False, seed: int = 21):
         self.data_dir = data_dir
         self.num_workers = num_workers
         self.val_size = val_size
+        self.pct = pct
         self.seed = seed
     
     def get_tiles(self, row: pd.Series, phase: str):
@@ -87,8 +88,12 @@ class LymphoDataModule():
             test_df = self.tile_dataframe(test_df, phase='test')
             test_df.to_csv(Path(self.data_dir, f'test.csv'), index=False)
 
-        train_df = train_df.reset_index()
-        val_df = val_df.reset_index()
+        if self.pct:
+            train_df = train_df.sample(frac=0.01).reset_index()
+            val_df = val_df.sample(frac=0.01).reset_index()
+        else:
+            train_df = train_df.reset_index()
+            val_df = val_df.reset_index()
         self.train_dataset, self.val_dataset = (
             MILImageDataset(train_df, training=True),
             MILImageDataset(val_df, training=True)
