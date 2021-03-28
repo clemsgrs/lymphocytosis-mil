@@ -30,7 +30,7 @@ print()
 data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, pct=params.pct, seed=params.seed)
 data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
-train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=params.batch_size, shuffle=False)
+inference_loader = torch.utils.data.DataLoader(train_dataset, batch_size=params.batch_size, shuffle=False)
 val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
 print()
 
@@ -62,7 +62,7 @@ for epoch in range(params.nepochs):
     inference_loss, inference_metric, train_sampler = run_inference(
         epoch+1,
         model,
-        train_loader,
+        inference_loader,
         train_df,
         criterion,
         topk_processor, 
@@ -91,7 +91,6 @@ for epoch in range(params.nepochs):
     train_losses.append(train_loss)
     train_metrics.append(train_metric)
     train_bacc = train_metric['balanced_acc']
-
 
     if epoch % params.eval_every == 0:
         
