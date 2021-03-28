@@ -90,6 +90,8 @@ for epoch in range(params.nepochs):
     )
     train_losses.append(train_loss)
     train_metrics.append(train_metric)
+    train_bacc = train_metric['balanced_acc']
+
 
     if epoch % params.eval_every == 0:
         
@@ -104,6 +106,7 @@ for epoch in range(params.nepochs):
         )
         val_losses.append(val_loss)
         val_metrics.append(val_metric)
+        val_bacc = val_metric['balanced_acc']
 
         if params.tracking == 'val_loss':
             if val_loss < best_val_loss:
@@ -121,5 +124,5 @@ for epoch in range(params.nepochs):
     end_time = time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
     print(f'End of epoch {epoch+1} / {params.nepochs} \t Time Taken:  {epoch_mins}m {epoch_secs}s')
-    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_acc:.4f}')
-    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_acc:.4f}\n')
+    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f}')
+    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f}\n')
