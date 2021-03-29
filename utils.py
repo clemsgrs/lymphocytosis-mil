@@ -76,7 +76,7 @@ def run_inference(epoch, model, inference_dataset, criterion, topk_processor, pa
         )
 
         # metrics = get_metrics(probs, preds, labels)
-        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01))
         avg_loss = epoch_loss / len(inference_loader)
         train_sampler = TopKSampler(topk_indices)
 
@@ -130,7 +130,7 @@ def run_training(epoch, model, train_dataset, train_sampler, optimizer, criterio
         )
 
         # metrics = get_metrics(probs, preds, labels)
-        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01))
         avg_loss = epoch_loss / len(train_loader)
         
         return avg_loss, best_balanced_acc, best_threshold
@@ -182,7 +182,7 @@ def run_validation(epoch, model, val_dataset, criterion, topk_processor, params,
         )
 
         # metrics = get_metrics(probs, preds, labels)
-        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01))
         avg_loss = epoch_loss / len(val_loader)
         
         return avg_loss, best_balanced_acc, best_threshold
