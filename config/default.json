@@ -1,5 +1,5 @@
 {
-    "data_dir": "../data/3md3070-dlmi/",
+    "data_dir": "data/3md3070-dlmi/",
     "seed": 1,
     "pct": false,
     "val_size": 0.5,
@@ -10,8 +10,8 @@
     "lr": 0.001,
     "lr_scheduler": true,
     "lr_step": 15,
-    "tracking": "val_loss",
-    "model": "encoder_decoder",
+    "tracking": "val_acc",
+    "model": "resnet18",
     "dropout_p": 0.1,
     "checkpoint_dir": "checkpoints",
     "result_dir": "results",

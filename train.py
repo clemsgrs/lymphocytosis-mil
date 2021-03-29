@@ -36,7 +36,7 @@ topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
 
 ### TRAINING
 
-model = timm.create_model('resnet18', pretrained=True)
+model = timm.create_model(params.model, pretrained=True)
 model.fc = nn.Linear(512, 1)
 optimizer = optim.Adam(model.parameters(), lr=params.lr)
 if params.lr_scheduler:
@@ -102,8 +102,8 @@ for epoch in range(params.nepochs):
                 torch.save(model.state_dict(), 'best_model.pt')
 
         elif params.tracking == 'val_acc':
-            if val_acc > best_val_acc:
-                best_val_acc = val_acc
+            if val_bacc > best_val_acc:
+                best_val_acc = val_bacc
                 torch.save(model.state_dict(), 'best_model.pt')
 
     if params.lr_scheduler:
@@ -112,5 +112,5 @@ for epoch in range(params.nepochs):
     end_time = time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
     print(f'End of epoch {epoch+1} / {params.nepochs} \t Time Taken:  {epoch_mins}m {epoch_secs}s')
-    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f} (threshold={train_threshold})')
-    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f} (threshold={val_threshold})\n')
+    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f} (threshold={train_threshold:.3f})')
+    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f} (threshold={val_threshold:.3f})\n')

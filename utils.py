@@ -38,6 +38,7 @@ def run_inference(epoch, model, inference_dataset, criterion, topk_processor, pa
     probs = []
 
     inference_loader = torch.utils.data.DataLoader(inference_dataset, batch_size=params.batch_size, shuffle=False)
+    print(f'len(inference_loader): {len(inference_loader)}')
 
     with tqdm(inference_loader,
               desc=(f'Inference - Epoch {epoch}'),
@@ -95,6 +96,7 @@ def run_training(epoch, model, train_dataset, train_sampler, optimizer, criterio
         sampler=train_sampler,
         shuffle=False        
     )
+    print(f'len(train_loader): {len(train_loader)}')
 
     with tqdm(train_loader,
               desc=(f'Train - Epoch {epoch}'),
@@ -142,7 +144,8 @@ def run_validation(epoch, model, val_dataset, criterion, topk_processor, params,
     probs = []
 
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
-    
+    print(f'len(val_loader): {len(val_loader)}')
+
     with tqdm(val_loader,
               desc=(f'Validation - Epoch {epoch}'),
               unit=' img',
