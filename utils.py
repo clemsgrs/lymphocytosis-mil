@@ -38,7 +38,6 @@ def run_inference(epoch, model, inference_dataset, criterion, topk_processor, pa
     probs = []
 
     inference_loader = torch.utils.data.DataLoader(inference_dataset, batch_size=params.batch_size, shuffle=False)
-    print(f'len(inference_loader): {len(inference_loader)}')
 
     with tqdm(inference_loader,
               desc=(f'Inference - Epoch {epoch}'),
@@ -96,7 +95,6 @@ def run_training(epoch, model, train_dataset, train_sampler, optimizer, criterio
         sampler=train_sampler,
         shuffle=False        
     )
-    print(f'len(train_loader): {len(train_loader)}')
 
     with tqdm(train_loader,
               desc=(f'Train - Epoch {epoch}'),
@@ -144,7 +142,6 @@ def run_validation(epoch, model, val_dataset, criterion, topk_processor, params,
     probs = []
 
     val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
-    print(f'len(val_loader): {len(val_loader)}')
 
     with tqdm(val_loader,
               desc=(f'Validation - Epoch {epoch}'),
@@ -182,7 +179,7 @@ def run_validation(epoch, model, val_dataset, criterion, topk_processor, params,
         )
 
         # metrics = get_metrics(probs, preds, labels)
-        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01))
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01), plot=True)
         avg_loss = epoch_loss / len(val_loader)
         
         return avg_loss, best_balanced_acc, best_threshold
@@ -272,7 +269,7 @@ def get_metrics(probs, labels):
     metrics_dict = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
     return metrics_dict
 
-def get_balanced_accuracy(probs, labels, thresholds=[0.5]):
+def get_balanced_accuracy(probs, labels, thresholds=[0.5], plot=False):
     probs, labels = probs.numpy(), labels.numpy()
     accs = []
     for threshold in thresholds:
@@ -282,6 +279,15 @@ def get_balanced_accuracy(probs, labels, thresholds=[0.5]):
     
     best_balanced_acc = np.amax(accs)
     best_threshold = thresholds[np.argmax(accs)]
+
+    if plot:
+        plt.plot(thresholds, accs, color='#506AA5')
+        plt.axvline(x=best_threshold, color='#9950A5', linestyle=':')
+        plt.axhline(y=best_balanced_acc, color='#9950A5', linestyle=':')
+        plt.xlabel('threshold')
+        plt.ylabel('balanced accuracy')
+        plt.title('balanced accuracy as a function of threshold')
+        plt.show()
     
     return best_balanced_acc, best_threshold
 

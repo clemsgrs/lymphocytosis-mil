@@ -112,5 +112,5 @@ for epoch in range(params.nepochs):
     end_time = time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
     print(f'End of epoch {epoch+1} / {params.nepochs} \t Time Taken:  {epoch_mins}m {epoch_secs}s')
-    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f} (threshold={train_threshold:.3f})')
-    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f} (threshold={val_threshold:.3f})\n')
+    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f} (threshold={train_threshold:.2f})')
+    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f} (threshold={val_threshold:.2f})\n')
