@@ -281,6 +281,7 @@ def get_balanced_accuracy(probs, labels, thresholds=[0.5], plot=False):
     best_threshold = thresholds[np.argmax(accs)]
 
     if plot:
+        plt.figure(figsize(10,7))
         plt.plot(thresholds, accs, color='#506AA5')
         plt.axvline(x=best_threshold, color='#9950A5', linestyle=':')
         plt.axhline(y=best_balanced_acc, color='#9950A5', linestyle=':')
