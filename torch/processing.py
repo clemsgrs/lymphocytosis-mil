@@ -31,7 +31,7 @@ class TopKProcessor:
         threshold: float = 0.5
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         
-        sub_df = df.loc[np.hstack(indices)]
+        sub_df = df.loc[indices]
         grouped_sub_df = sub_df.groupby(group)
         probs = torch.from_numpy(grouped_sub_df.apply(
             lambda gdf: self.aggregation_func(gdf[prob_col_name])).values
@@ -40,7 +40,7 @@ class TopKProcessor:
             lambda gdf: self.aggregation_func(gdf[prob_col_name]) > threshold).values.astype('int')
         )
         labels = torch.from_numpy(grouped_sub_df.apply(
-            lambda gdf: self.aggregation_func(gdf.label)).values
+            lambda gdf: self.aggregation_func(gdf.label)).values.astype('int')
         )
         patient_ids = np.array(list(grouped_sub_df.groups.keys()))
         return patient_ids, probs, preds, labels

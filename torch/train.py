@@ -59,7 +59,7 @@ inference_metrics, train_metrics, val_metrics = [], [], []
 for epoch in range(params.nepochs):
 
     start_time = time.time()
-    inference_loss, inference_metric, train_sampler = run_inference(
+    inference_loss, inference_metric, inference_threshold , train_sampler = run_inference(
         epoch+1,
         model,
         inference_loader,
@@ -78,7 +78,7 @@ for epoch in range(params.nepochs):
         shuffle=False        
     )
 
-    train_loss, train_metric = run_training(
+    train_loss, train_metric, train_threshold = run_training(
         epoch+1, 
         model, 
         train_loader, 
@@ -90,11 +90,12 @@ for epoch in range(params.nepochs):
     )
     train_losses.append(train_loss)
     train_metrics.append(train_metric)
-    train_bacc = train_metric['balanced_acc']
+    # train_bacc = train_metric['balanced_acc']
+    train_bacc = train_metric
 
     if epoch % params.eval_every == 0:
         
-        val_loss, val_metric = run_validation(
+        val_loss, val_metric, val_threshold = run_validation(
             epoch+1, 
             model, 
             val_loader, 
@@ -105,7 +106,8 @@ for epoch in range(params.nepochs):
         )
         val_losses.append(val_loss)
         val_metrics.append(val_metric)
-        val_bacc = val_metric['balanced_acc']
+        # val_bacc = val_metric['balanced_acc']
+        val_bacc = val_metric
 
         if params.tracking == 'val_loss':
             if val_loss < best_val_loss:
@@ -123,5 +125,5 @@ for epoch in range(params.nepochs):
     end_time = time.time()
     epoch_mins, epoch_secs = epoch_time(start_time, end_time)
     print(f'End of epoch {epoch+1} / {params.nepochs} \t Time Taken:  {epoch_mins}m {epoch_secs}s')
-    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f}')
-    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f}\n')
+    print(f'Train loss: {train_loss:.5f} \t Train acc: {train_bacc:.4f} (threshold={train_threshold})')
+    print(f'Val loss: {val_loss:.5f} \t Val acc: {val_bacc:.4f} (threshold={val_threshold})\n')

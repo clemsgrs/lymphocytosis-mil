@@ -72,12 +72,12 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
             threshold=0.5,
         )
 
-        metrics = get_metrics(probs, preds, labels)
-        metrics = {m: v / len(inference_loader) for m,v in metrics.items()}
+        # metrics = get_metrics(probs, preds, labels)
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
         avg_loss = epoch_loss / len(inference_loader)
         train_sampler = TopKSampler(topk_indices)
 
-        return avg_loss, metrics, train_sampler
+        return avg_loss, best_balanced_acc, best_threshold, train_sampler
 
 
 def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_processor, params, threshold=0.5):
@@ -118,11 +118,11 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             threshold=0.5,
         )
 
-        metrics = get_metrics(probs, preds, labels)
-        metrics = {m: v / len(train_loader) for m,v in metrics.items()}
+        # metrics = get_metrics(probs, preds, labels)
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
         avg_loss = epoch_loss / len(train_loader)
         
-        return avg_loss, metrics
+        return avg_loss, best_balanced_acc, best_threshold
 
 
 def run_validation(epoch, model, val_loader, df, criterion, topk_processor, params, threshold=0.5):
@@ -167,11 +167,11 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
             threshold=0.5,
         )
 
-        metrics = get_metrics(probs, preds, labels)
-        metrics = {m: v / len(val_loader) for m,v in metrics.items()}
+        # metrics = get_metrics(probs, preds, labels)
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.4, 1, 0.01))
         avg_loss = epoch_loss / len(val_loader)
         
-        return avg_loss, metrics
+        return avg_loss, best_balanced_acc, best_threshold
 
 
 def test_model(model, test_loader, params, threshold=0.5):
@@ -226,10 +226,9 @@ def plot_curves(train_losses, train_accuracies, validation_losses, validation_ac
     plt.show()
 
 
-def get_metrics(probs, preds, labels):
-    labels = labels.type(torch.IntTensor)
-    probs, preds, labels = probs.numpy(), preds.numpy(), labels.numpy()
-    
+def get_metrics(probs, labels):
+    probs, labels = probs.numpy(), labels.numpy()
+    preds = probs > 0.5
     acc = metrics.accuracy_score(labels, preds)
     balanced_acc = metrics.balanced_accuracy_score(labels, preds)
     auc = metrics.roc_auc_score(labels, probs)
@@ -238,3 +237,17 @@ def get_metrics(probs, preds, labels):
     
     metrics_dict = {'acc': acc, 'balanced_acc': balanced_acc, 'auc': auc, 'precision': precision, 'recall': recall}
     return metrics_dict
+
+def get_balanced_accuracy(probs, labels, thresholds=[0.5]):
+    probs, labels = probs.numpy(), labels.numpy()
+    
+    for threshold in thresholds:
+        preds = (probs > 0.5).astype('int')
+        balanced_acc = metrics.balanced_accuracy_score(labels, preds)
+        accs.append(balanced_acc)
+    
+    best_balanced_acc = np.amax(accs)
+    best_threshold = thresholds[np.argmax(accs)]
+    
+    return best_balanced_acc, best_threshold
+
