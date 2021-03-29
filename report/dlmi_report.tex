@@ -16,6 +16,8 @@
 \usepackage{graphicx}
 \usepackage{fancyvrb}
 
+\setlength{\abovecaptionskip}{-3pt plus 3pt minus 2pt}
+
 
 % Include other packages here, before hyperref.
 
@@ -140,12 +142,15 @@
 	Finally, the aggregation module transforms each bag of scores into a final patient prediction.
 	
 	It is common that the features are aggregated before being linearly mapped to the final prediction score.
-	In contrast, we apply the aggregation after reducing each feature to a single prediction score. We did not find this to impact the results (and in the case where the aggregation function is linear, both methods are equivalent). Doing so makes the model more interpretable as each pixel of each image is given a score. 
+	In contrast, we apply the aggregation after reducing each feature to a single prediction logit. We did not find this to impact the results (and in the case where the aggregation function is linear, both methods are equivalent). Doing so makes the model more interpretable as each pixel (in the feature space) of each image can be given a score. 
 	
 
-	As the number of images passed through the backbone is often large, we keep the gradients for only a subset of these images. Pseudo-code for this is provided by Algorithm 1.
-	
-	\begin{Verbatim}[fontsize=\footnotesize, samepage=true]
+	As the number of images passed through the backbone is often large, we keep the gradients for only a random subset of these images. Pseudo-code for this is provided by Algorithm 1.
+
+
+\begin{table}[h]
+	\renewcommand\tablename{Pseudo-code}
+	\begin{Verbatim}[fontsize=\footnotesize, samepage=true, frame=single]
 B, 3, H, W = image_batch.shape
 max_forward_size = 512
 max_backward_size = 512
@@ -160,7 +165,14 @@ with torch.no_grad():
     i = j
 # forward image with gradients
 features.append(backbone(images[i:]))
+# Note: the images are supposed to be shuffled
+# so that the subset for which the gradients
+# are kept is random.
 	\end{Verbatim}
+    \caption{PyTorch-like pseudo-code for propagating the gradients through only a subset of the images, in order to not run out of GPU memory.}
+	\label{alg1}
+\end{table}
+
 
 
 
@@ -201,13 +213,17 @@ $$\mu = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \ell_i^j$$
 $$V = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \left(\ell_i^j - \mu \right)^2$$
 where $B$ is the batch size. Intuitively, $\alpha_i^j$ is small when $\ell_i^j$ is small compared to the rest of the batch, i.e, when it is likely to be a negative sample.
 
-\begin{Verbatim}[fontsize=\footnotesize, samepage=true]
-	# PyTorch like code for our aggregation function
-	logits = conv(features) # 1 channel
-	weights = bn(logits.detach())
-	weighted_logits = weights * logits
-	y = sigmoid(weighted_logits.sum() / weights.sum())
+\begin{table}[h]
+	\renewcommand\tablename{Pseudo-code}
+\begin{Verbatim}[fontsize=\footnotesize, samepage=true, frame=single]
+logits = conv(features) # 1 channel
+weights = bn(logits.detach())
+weighted_logits = weights * logits
+y = sigmoid(weighted_logits.sum()/weights.sum())
 \end{Verbatim}
+\label{alg2}
+\caption{PyTorch-like pseudo-code for our custom aggregation function}
+\end{table}
 
 \begin{figure}[t]
 	\begin{center}
@@ -229,12 +245,25 @@ where $B$ is the batch size. Intuitively, $\alpha_i^j$ is small when $\ell_i^j$ 
 
 
 \subsection{Number of images}
-	
+In the previous sections, when doing one training step, we used all the images of each patient and aggregated their logits.
+In this experiment, we use only a small random subset of image per patient during each training step. 
+We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this as the easy, positive images has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information.
+
 	\section{Results}
 	
+	\section{Explainability}
+	\begin{figure}[t]
+		\begin{center}
+			\includegraphics[width=0.7\linewidth]{explainable1}
+		\end{center}
+		\caption{Predictions and images for 16 patients from the validation set. The patients where not cherry-picked. For each patient, a red left border indicates a positive ground truth label while green indicates a negative one. For each lymphocyte image, we provide on the left the $4\times 4$ predictions of the network. White means a score of one and black a score of 0.}
+		\label{fig:resnet}
+	\end{figure}
+	
 	\section{Conclusion}
+	Future work: dilated ResNet ?
 	
-	
+	\clearpage
 	{\small
 		\bibliographystyle{unsrt}
 		\bibliography{egbib}
