@@ -101,10 +101,9 @@ class LymphoDataModule():
 
 
 class TestDataModule():
-    def __init__(self, data_dir: str, num_workers: int, seed: int = 21):
+    def __init__(self, data_dir: str, num_workers: int = 1):
         self.data_dir = data_dir
         self.num_workers = num_workers
-        self.seed = seed
     
     def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']

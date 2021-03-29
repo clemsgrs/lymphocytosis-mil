@@ -30,12 +30,14 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
-def run_inference(epoch, model, inference_loader, df, criterion, topk_processor, params, threshold=0.5):
+def run_inference(epoch, model, inference_dataset, criterion, topk_processor, params, threshold=0.5):
 
     model.eval()
     epoch_loss = 0
     instance_indices = []
     probs = []
+
+    inference_loader = torch.utils.data.DataLoader(inference_dataset, batch_size=params.batch_size, shuffle=False)
 
     with tqdm(inference_loader,
               desc=(f'Inference - Epoch {epoch}'),
@@ -58,14 +60,14 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
                 
                 epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'inference_prob'] = probs
+        inference_dataset.df.loc[instance_indices, 'inference_prob'] = probs
         topk_indices = topk_processor(
-            df,
+            inference_dataset.df,
             prob_col_name='inference_prob',
             group='id'
         )
         patient_ids, probs, preds, labels = topk_processor.aggregate(
-            df,
+            inference_dataset.df,
             topk_indices,
             prob_col_name='inference_prob',
             group='id', 
@@ -80,12 +82,19 @@ def run_inference(epoch, model, inference_loader, df, criterion, topk_processor,
         return avg_loss, best_balanced_acc, best_threshold, train_sampler
 
 
-def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_processor, params, threshold=0.5):
+def run_training(epoch, model, train_dataset, train_sampler, optimizer, criterion, topk_processor, params, threshold=0.5):
 
     model.train()
     epoch_loss = 0
     instance_indices = []
     probs = []
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset, 
+        batch_size=params.batch_size,
+        sampler=train_sampler,
+        shuffle=False        
+    )
 
     with tqdm(train_loader,
               desc=(f'Train - Epoch {epoch}'),
@@ -109,9 +118,9 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
             
             epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'training_prob'] = probs
+        train_dataset.df.loc[instance_indices, 'training_prob'] = probs
         patient_ids, probs, preds, labels = topk_processor.aggregate(
-            df,
+            train_dataset.df,
             instance_indices,
             prob_col_name='training_prob',
             group='id', 
@@ -125,13 +134,15 @@ def run_training(epoch, model, train_loader, df, optimizer, criterion, topk_proc
         return avg_loss, best_balanced_acc, best_threshold
 
 
-def run_validation(epoch, model, val_loader, df, criterion, topk_processor, params, threshold=0.5):
+def run_validation(epoch, model, val_dataset, criterion, topk_processor, params, threshold=0.5):
 
     model.eval()
     epoch_loss = 0
     instance_indices = []
     probs = []
 
+    val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
+    
     with tqdm(val_loader,
               desc=(f'Validation - Epoch {epoch}'),
               unit=' img',
@@ -153,14 +164,14 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
                 
                 epoch_loss += loss.item()
         
-        df.loc[instance_indices, 'validation_prob'] = probs
+        val_dataset.df.loc[instance_indices, 'validation_prob'] = probs
         topk_indices = topk_processor(
-            df,
+            val_dataset.df,
             prob_col_name='validation_prob',
             group='id'
         )
         patient_ids, probs, preds, labels = topk_processor.aggregate(
-            df,
+            val_dataset.df,
             topk_indices,
             prob_col_name='validation_prob',
             group='id', 
@@ -174,31 +185,51 @@ def run_validation(epoch, model, val_loader, df, criterion, topk_processor, para
         return avg_loss, best_balanced_acc, best_threshold
 
 
-def test_model(model, test_loader, params, threshold=0.5):
+def run_test(model, test_dataset, topk_processor, params, threshold=0.5):
 
     model.eval()
-    preds_dict = {}
+    instance_indices = []
+    probs = []
+    
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False)    
 
     with tqdm(test_loader,
-             desc=(f'Test: '),
+             desc=(f'Test '),
              unit=' patient',
              ncols=80,
              unit_scale=params.test_batch_size) as t:
 
         with torch.no_grad():
 
-            for i, (signal, sample_index, subject_index) in enumerate(t):
+            for i, batch in enumerate(t):
 
-                signal = signal.type(torch.FloatTensor)
-                signal = signal.cuda()
-                preds = model(signal).unsqueeze(0)
-                preds = preds.type(torch.FloatTensor).cpu()
-                sample_index = sample_index.item()
+                index, image, lymph_count, label = batch
+                image, lymph_count, label = image.cuda(), lymph_count.cuda(), label.cuda()
+                logits = model(image)                
+                prob = torch.sigmoid(logits)
+                probs.extend(prob[:,0].clone().tolist())
+                instance_indices.extend(list(index))
                 
-                preds_dict[int(sample_index)] = [int(x>threshold) for x in preds.tolist()]
+                epoch_loss += loss.item()
 
-    preds_df = format_prediction_to_submission_canvas(preds_dict)
-    return preds_df
+    test_dataset.df.loc[instance_indices, 'prob'] = probs
+    topk_indices = topk_processor(
+        test_dataset.df,
+        prob_col_name='prob',
+        group='id'
+    )
+    patient_ids, probs, preds, labels = topk_processor.aggregate(
+        test_dataset.df,
+        topk_indices,
+        prob_col_name='prob',
+        group='id', 
+        threshold=threshold,
+    )
+    
+    preds_dict = {'Id': list(patient_ids), 'Predicted': list(preds.numpy())}
+    test_predictions_df = pd.DataFrame.from_dict(test_preds_dict)
+    
+    return test_predictions_df
 
 
 def plot_curves(train_losses, train_accuracies, validation_losses, validation_accuracies, params):
@@ -240,9 +271,9 @@ def get_metrics(probs, labels):
 
 def get_balanced_accuracy(probs, labels, thresholds=[0.5]):
     probs, labels = probs.numpy(), labels.numpy()
-    
+    accs = []
     for threshold in thresholds:
-        preds = (probs > 0.5).astype('int')
+        preds = (probs > threshold).astype('int')
         balanced_acc = metrics.balanced_accuracy_score(labels, preds)
         accs.append(balanced_acc)
     

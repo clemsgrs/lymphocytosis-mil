@@ -30,13 +30,9 @@ print()
 data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, pct=params.pct, seed=params.seed)
 data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
-inference_loader = torch.utils.data.DataLoader(train_dataset, batch_size=params.batch_size, shuffle=False)
-val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=params.batch_size, shuffle=False)
 print()
 
 topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
-train_df = train_dataset.df
-val_df = val_dataset.df
 
 ### TRAINING
 
@@ -62,8 +58,7 @@ for epoch in range(params.nepochs):
     inference_loss, inference_metric, inference_threshold , train_sampler = run_inference(
         epoch+1,
         model,
-        inference_loader,
-        train_df,
+        train_dataset,
         criterion,
         topk_processor, 
         params
@@ -71,18 +66,11 @@ for epoch in range(params.nepochs):
     inference_losses.append(inference_loss)
     inference_metrics.append(inference_metric)
 
-    train_loader = torch.utils.data.DataLoader(
-        train_dataset, 
-        batch_size=params.batch_size,
-        sampler=train_sampler,
-        shuffle=False        
-    )
-
     train_loss, train_metric, train_threshold = run_training(
         epoch+1, 
         model, 
-        train_loader, 
-        train_df, 
+        train_dataset, 
+        train_sampler,
         optimizer, 
         criterion, 
         topk_processor, 
@@ -98,8 +86,7 @@ for epoch in range(params.nepochs):
         val_loss, val_metric, val_threshold = run_validation(
             epoch+1, 
             model, 
-            val_loader, 
-            val_df, 
+            val_dataset, 
             criterion, 
             topk_processor, 
             params
