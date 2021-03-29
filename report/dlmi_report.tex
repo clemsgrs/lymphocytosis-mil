@@ -117,16 +117,19 @@
 	 \\
 	 To understand how the model gradually learns to discriminate positive instances from negative ones, we need to focus on negative patients, who play a key role in the early stages of training. Under the standard MIL assumption , we know these patients must have all their instances classified as negative. At the end of the first \textit{inference} phase, the model has assigned these instances random probabilities, which can be either high or low. Hence, the top-$1$ instance for negative patient is random. I claim that this doesn't matter. Let me explain you why. What's important is what happens during the first \textit{learning} phase: for each negative patient, we have a (random) instance, which is negative. The model must adjust its weights to assign lower probabilities to each negative instances, such that at the following \textit{inference} step, all instances that look similar to negative instances will be assigned lower probabilities. As a result, all negative instances start to be assigned low probabilities, and positive instances will srand out, with higher probabilities. At this point, the top-$1$ instance of positive patient is more likely to be a true positive. And the model will adjust its weights to assign higher probabilities to this type of instance.\\
 	 \\
-	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.
+	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.\\
+	 \\
+	 \textcolor{red}{quick sentence to explain why using solely to top-$1$ instance might be, in some cases, problematic. this motivates the introduction of a hyperparameter $k$ whcih controls how many positive instances there might be in a positive bag (different degrees of positivity: 4 moderate positive instances, top proba is 0.6)}
 
 	\subsection{Extended  MIL Assumption} 
 	
 	top-$k$ = hyperparameter
 
-	\subsection{Towards a Custom Aggregation Function}
+	\subsection{Taking More Tiles into Consideration}
 	
 	top-$k$ \& bottom-$k$
 	
+	\subsection{Taking All Tiles into Consideration}
 
 	
 	\section{Architecture}
@@ -138,7 +141,7 @@
 	
 	\begin{figure}[t]
 		\begin{center}
-			\includegraphics[width=0.9\linewidth]{graphic2.pdf}
+			\includegraphics[width=0.9\linewidth]{fig/graphic2.pdf}
 		\end{center}
 		\caption{Baseline architecture.}
 		\label{fig:overview}
@@ -195,8 +198,8 @@ The results are summarized in Figure \ref{fig:resnet}. ResNet18 achieves the bes
 
 \begin{figure}[t]
 	\begin{center}
-		\includegraphics[width=0.47\linewidth]{resnets_bal_acc.pdf}
-		\includegraphics[width=0.47\linewidth]{resnets_val_loss.pdf}
+		\includegraphics[width=0.47\linewidth]{fig/resnets_bal_acc.pdf}
+		\includegraphics[width=0.47\linewidth]{fig/resnets_val_loss.pdf}
 	\end{center}
 	\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate 95\% confidence intervals. Shallower seems to be better but the results are not very significative.}
 	\label{fig:resnet}
@@ -237,7 +240,7 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 
 \begin{figure}[t]
 	\begin{center}
-		\includegraphics[width=0.95\linewidth]{aggreg_2.pdf}
+		\includegraphics[width=0.95\linewidth]{fig/aggreg_2.pdf}
 	\end{center}
 	\caption{The distribution of the batch normalized logits over a bag is shown in blue. The red sigmoid shows the weight that is associated to each logit. The smaller the logit, the smaller the weight.}
 	\label{fig:aggreg}
@@ -245,8 +248,8 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 
 \begin{figure}[t]
 	\begin{center}
-		\includegraphics[width=0.47\linewidth]{agg_bal_acc.pdf}
-		\includegraphics[width=0.47\linewidth]{agg_val_loss.pdf}
+		\includegraphics[width=0.47\linewidth]{fig/agg_bal_acc.pdf}
+		\includegraphics[width=0.47\linewidth]{fig/agg_val_loss.pdf}
 	\end{center}
 	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate 95\% confidence intervals.}
 	\label{fig:resnet}
@@ -264,7 +267,7 @@ We posit that selecting only a small subset of images provides some regularizati
 	\section{Explainability}
 	\begin{figure}[t]
 		\begin{center}
-			\includegraphics[width=0.7\linewidth]{explainable1}
+			\includegraphics[width=0.7\linewidth]{fig/explainable1}
 		\end{center}
 		\caption{Predictions and images for 16 patients from the validation set. The patients where not cherry-picked. For each patient, a red left border indicates a positive ground truth label while green indicates a negative one. For each lymphocyte image, we provide on the left the $4\times 4$ predictions of the network. White means a score of one and black a score of 0.}
 		\label{fig:resnet}
