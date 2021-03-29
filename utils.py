@@ -128,7 +128,7 @@ def run_training(epoch, model, train_dataset, train_sampler, optimizer, criterio
         )
 
         # metrics = get_metrics(probs, preds, labels)
-        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01))
+        best_balanced_acc, best_threshold = get_balanced_accuracy(probs, labels, thresholds=np.arange(0.0, 1, 0.01), plot=True)
         avg_loss = epoch_loss / len(train_loader)
         
         return avg_loss, best_balanced_acc, best_threshold
@@ -281,7 +281,7 @@ def get_balanced_accuracy(probs, labels, thresholds=[0.5], plot=False):
     best_threshold = thresholds[np.argmax(accs)]
 
     if plot:
-        plt.figure(figsize(10,7))
+        plt.figure(figsize=(10,7))
         plt.plot(thresholds, accs, color='#506AA5')
         plt.axvline(x=best_threshold, color='#9950A5', linestyle=':')
         plt.axhline(y=best_balanced_acc, color='#9950A5', linestyle=':')

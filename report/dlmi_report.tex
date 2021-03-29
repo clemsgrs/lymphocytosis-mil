@@ -97,17 +97,27 @@
 	
 	\section{Related Work}
 	
+	add 3-4 papers: Maria's, Paige's
+	
 	\section{Methodology}
 	
 	\subsection{Standard MIL Assumption} 
 	
-	Under the standard MIL assumption: 
+	Under the standard MIL assumption, \emph{positive} patients must contain at least one instance classified as \emph{positive}, while \emph{negative} patients, instead, must have all their instances classified as \emph{negative}.\\
+	\\
+	The full pipeline is described on Figure \ref{fig:mil_pipeline}. Each forward + backward pass can be broken down into two consecutive stages: 
 	
 	\begin{itemize}
-		\setlength\itemsep{-.2em}
-		\item \emph{positive} patients must contain at least one instance classified as \emph{positive}
-		\item \emph{negative} patients, instead, must have all their instances classified as \emph{negative}
+		\setlength\itemsep{-.0em}
+		\item the \emph{inference} phase: during \emph{inference}, the models' weights are frozen. Each instance is run through the network and assigned a number between $0$ and $1$: the more likely an instance to indicate tumoral lymphocytosis, the closer the number assigned to $1$. Once all the instances of a patient have been processed, they can be ranked according to their probability of being \emph{positive}. For each patient, the top-$1$ instance is selected for the second stage: the \emph{learning} phase.
+		\item the \emph{learning} phase: we now allow the models' weights to be updated. Given the standard MIL assumption detailed above, one can expect the top-$1$ instance of a \emph{positive} patient to be \emph{positive}, and the top-$1$ instance of a \emph{negative} patient to be \emph{negative}. Hence, as we run the top-$1$ instance through the network, we assign them the label of the patient they come from and update the weights accordingly: the network adjusts its weights in order to assign high probabilities to the top-$1$ instances coming from positive patients, while keeping low probabilities for the top-$1$ instances in negative patients. 
 	\end{itemize}
+	\noindent
+	 At this stage, you might be wondering ``\textit{how this model converges} ?". It is true that it is not obvious as the model is initialized with ImageNet pre-trained weights, hence there's not reason to believe the model will assign high probabilities to the true positive instances, and low probabilities to true negative instances. And actually, the model does start by assigning random probabilities to each instances!  \\
+	 \\
+	 To understand how the model gradually learns to discriminate positive instances from negative ones, we need to focus on negative patients, who play a key role in the early stages of training. Under the standard MIL assumption , we know these patients must have all their instances classified as negative. At the end of the first \textit{inference} phase, the model has assigned these instances random probabilities, which can be either high or low. Hence, the top-$1$ instance for negative patient is random. I claim that this doesn't matter. Let me explain you why. What's important is what happens during the first \textit{learning} phase: for each negative patient, we have a (random) instance, which is negative. The model must adjust its weights to assign lower probabilities to each negative instances, such that at the following \textit{inference} step, all instances that look similar to negative instances will be assigned lower probabilities. As a result, all negative instances start to be assigned low probabilities, and positive instances will srand out, with higher probabilities. At this point, the top-$1$ instance of positive patient is more likely to be a true positive. And the model will adjust its weights to assign higher probabilities to this type of instance.\\
+	 \\
+	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.
 
 	\subsection{Extended  MIL Assumption} 
 	
@@ -261,7 +271,8 @@ We posit that selecting only a small subset of images provides some regularizati
 	\end{figure}
 	
 	\section{Conclusion}
-	Future work: dilated ResNet ?
+	Future work: dilated ResNet ?\\
+	Future work: aggregate embeddings using a recurrent neural network / self-attention encoder?
 	
 	\clearpage
 	{\small
