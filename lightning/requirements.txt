@@ -1,0 +1,8 @@
+opencv-python
+pandas>=1.2.0
+pytorch-lightning
+sklearn
+torch
+torchvision
+tqdm
+timm
