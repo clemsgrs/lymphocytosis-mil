@@ -121,7 +121,8 @@ class TestDataModule():
             test_df = self.tile_dataframe(test_df, phase='test')
             if self.save_csv:
                 test_df.to_csv(Path(self.data_dir, f'test.csv'), index=False)
-
+        
+        test_df = test_df.reset_index()
         self.test_dataset = (
             MILImageDataset(test_df, training=False)
         )
