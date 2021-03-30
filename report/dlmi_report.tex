@@ -285,7 +285,17 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 \subsection{Number of images}
 In the previous sections, when doing one training step, we used all the images of each patient and aggregated their logits.
 In this experiment, we use only a small random subset of image per patient during each training step. 
-We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this as the easy, positive images has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information.
+We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this problem, as the easy positive image has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information. This idea is similar to hard negative mining, and could be called "easy positive avoidance".
+
+Our wining submission was obtained with this strategy but Figure \ref{fig:num_img} shows that it actually worsened the results when evaluated over 10 runs \footnote{When training with 10 images per patient per batch, we trained for 120 epochs instead of 40, but performed evaluation only every third epoch (so that the number of evaluations is kept the same).}.
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.95\linewidth]{fig/num_img_bal_acc.pdf}
+	\end{center}
+	\caption{The performance when training with subsets of 10 images was generally worse.}
+	\label{fig:num_img}
+\end{figure}
 
 \section{Results}
 
