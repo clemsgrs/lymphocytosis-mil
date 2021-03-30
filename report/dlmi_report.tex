@@ -142,7 +142,7 @@
 	\subsection{Architecture}
 	
 	We start from a simple baseline and we evaluate different modifications.
-	For each configuration, we run 10 trainings. Each training has its own seed for initializing the model and splitting the dataset (50/50 split). The 10 seeds are kept the same for each configuration. Each model is trained for 40 epochs with a batch size of 16, resulting in 5 batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the 10 best values of each training, and again average this over all 10 trainings (the average is thus taken over 100 values). We always report 95\% confidence intervals.
+	For each configuration, we run $10$ trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). We always report $95\%$ confidence intervals.
 	
 	\subsection{Baseline}
 	
@@ -197,18 +197,18 @@ features.append(backbone(images[i:]))
 
 
 \subsection{Augmentations}
-As the images are centered on a lymphocytes, we always apply a center crop of size 112 to all images (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
+As the images are centered on a lymphocytes, we always apply a center crop of size $112$ to all images (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
 
 \subsection{Backbone Choice}
-We compared three backbones: ResNet18, ResNet34 and ResNet50 \cite{resnet}. We also tried a more recent backbone, EfficientNet \cite{efn}, but did not obtain good results.
-The results are summarized in Figure \ref{fig:resnet}. ResNet18 achieves the best validation balanced accuracy. We use it for all our subsequent experiments.
+We compared three backbones: ResNet$18$, ResNet$34$ and ResNet$50$ \cite{resnet}. We also tried a more recent backbone, EfficientNet \cite{efn}, but did not obtain good results.
+The results are summarized in Figure \ref{fig:resnet}. ResNet$18$ achieves the best validation balanced accuracy. We use it for all our subsequent experiments.
 
 \begin{figure}[t]
 	\begin{center}
 		\includegraphics[width=0.47\linewidth]{fig/resnets_bal_acc.pdf}
 		\includegraphics[width=0.47\linewidth]{fig/resnets_val_loss.pdf}
 	\end{center}
-	\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate 95\% confidence intervals. Shallower seems to be better but the results are not very significative.}
+	\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate $95\%$ confidence intervals. Shallower seems to be better but the results are not very significative.}
 	\label{fig:resnet}
 \end{figure}
 
@@ -258,7 +258,7 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 		\includegraphics[width=0.47\linewidth]{fig/agg_bal_acc.pdf}
 		\includegraphics[width=0.47\linewidth]{fig/agg_val_loss.pdf}
 	\end{center}
-	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate 95\% confidence intervals.}
+	\caption{Impact of our BN aggregation function on validation loss and balanced accuracy.  The black bars indicate $95\%$ confidence intervals.}
 	\label{fig:resnet}
 \end{figure}
 

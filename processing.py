@@ -5,9 +5,8 @@ from typing import Tuple
 
 
 class TopKProcessor:
-    def __init__(self, topk_train: int = 1, topk_agg: int = 1, aggregation: str = 'max'):
-        self.topk_train = topk_train
-        self.topk_agg = topk_agg
+    def __init__(self, topk: int = 1,aggregation: str = 'max'):
+        self.topk = topk
         assert aggregation in ['max', 'mean']
         self.aggregation_func = np.amax if aggregation == 'max' else np.mean
 
@@ -19,7 +18,7 @@ class TopKProcessor:
     ) -> np.ndarray:
         
         topk_indices = np.hstack(df.groupby(group).apply(
-            lambda gdf: gdf.sort_values(prob_col_name, ascending=False).index.values[:self.topk_train]
+            lambda gdf: gdf.sort_values(prob_col_name, ascending=False).index.values[:self.topk]
         ))
         return topk_indices
 
@@ -32,13 +31,13 @@ class TopKProcessor:
         threshold: float = 0.5
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         
-        # sub_df = df.loc[indices]
-        grouped_sub_df = df.groupby(group)
+        sub_df = df.loc[indices]
+        grouped_sub_df = sub_df.groupby(group)
         probs = torch.from_numpy(grouped_sub_df.apply(
-            lambda gdf: self.aggregation_func(gdf.sort_values(prob_col_name, ascending=False)[prob_col_name].values[:self.topk_agg])).values
+            lambda gdf: self.aggregation_func(gdf[prob_col_name])).values
         )
         preds = torch.from_numpy(grouped_sub_df.apply(
-            lambda gdf: self.aggregation_func(gdf.sort_values(prob_col_name, ascending=False)[prob_col_name].values[:self.topk_agg]) > threshold).values.astype('int')
+            lambda gdf: self.aggregation_func(gdf[prob_col_name]) > threshold).values.astype('int')
         )
         labels = torch.from_numpy(grouped_sub_df.apply(
             lambda gdf: self.aggregation_func(gdf.label)).values.astype('int')

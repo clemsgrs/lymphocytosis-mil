@@ -32,7 +32,8 @@ data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
 print()
 
-topk_processor = TopKProcessor(topk_train=params.topk_train, topk_agg=params.topk_agg, aggregation=params.aggregation)
+topk_train_processor = TopKProcessor(topk=params.topk_train, aggregation=params.aggregation)
+topk_val_processor = TopKProcessor(topk=params.topk_agg, aggregation=params.aggregation)
 
 ### TRAINING
 
@@ -60,7 +61,7 @@ for epoch in range(params.nepochs):
         model,
         train_dataset,
         criterion,
-        topk_processor, 
+        topk_train_processor, 
         params
     )
     inference_losses.append(inference_loss)
@@ -73,7 +74,7 @@ for epoch in range(params.nepochs):
         train_sampler,
         optimizer, 
         criterion, 
-        topk_processor, 
+        topk_train_processor, 
         params
     )
     train_losses.append(train_loss)
@@ -88,7 +89,7 @@ for epoch in range(params.nepochs):
             model, 
             val_dataset, 
             criterion, 
-            topk_processor, 
+            topk_val_processor, 
             params
         )
         val_losses.append(val_loss)
