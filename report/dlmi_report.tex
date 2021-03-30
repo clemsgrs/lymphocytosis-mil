@@ -113,6 +113,15 @@
 		\item the \emph{inference} phase: during \emph{inference}, the models' weights are frozen. Each instance is run through the network and assigned a number between $0$ and $1$: the more likely an instance to indicate tumoral lymphocytosis, the closer the number assigned to $1$. Once all the instances of a patient have been processed, they can be ranked according to their probability of being \emph{positive}. For each patient, the top-$1$ instance is selected for the second stage: the \emph{learning} phase.
 		\item the \emph{learning} phase: we now allow the models' weights to be updated. Given the standard MIL assumption detailed above, one can expect the top-$1$ instance of a \emph{positive} patient to be \emph{positive}, and the top-$1$ instance of a \emph{negative} patient to be \emph{negative}. Hence, as we run the top-$1$ instance through the network, we assign them the label of the patient they come from and update the weights accordingly: the network adjusts its weights in order to assign high probabilities to the top-$1$ instances coming from positive patients, while keeping low probabilities for the top-$1$ instances in negative patients. 
 	\end{itemize}
+
+	\begin{figure*}[h!]
+		\begin{center}
+			\includegraphics[width=0.9\linewidth, trim=0cm 5cm 0cm 0cm, clip]{fig/mil_pipeline.pdf}
+		\end{center}
+		\caption{MIL Pipeline}
+		\label{fig:mil_pipeline}
+	\end{figure*}
+
 	\noindent
 	 At this stage, you might be wondering ``\textit{how this model converges} ?". It is true that it is not obvious as the model is initialized with ImageNet pre-trained weights, hence there's not reason to believe the model will assign high probabilities to the true positive instances, and low probabilities to true negative instances. And actually, the model does start by assigning random probabilities to each instances!  \\
 	 \\
