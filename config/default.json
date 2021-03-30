@@ -16,6 +16,7 @@
     "checkpoint_dir": "checkpoints",
     "result_dir": "results",
     "save_csv": false,
-    "topk": 10,
+    "topk_train": 1,
+    "topk_agg": 10,
     "aggregation": "mean"
 }

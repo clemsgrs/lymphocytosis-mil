@@ -32,7 +32,7 @@ data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
 print()
 
-topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
+topk_processor = TopKProcessor(topk_train=params.topk_train, topk_agg=params.topk_agg, aggregation=params.aggregation)
 
 ### TRAINING
 

@@ -119,29 +119,34 @@
 	 \\
 	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.\\
 	 \\
-	 \textcolor{red}{quick sentence to explain why using solely to top-$1$ instance might be, in some cases, problematic. this motivates the introduction of a hyperparameter $k$ whcih controls how many positive instances there might be in a positive bag (different degrees of positivity: 4 moderate positive instances, top proba is 0.6)}
+	The standard MIL assumption implies that a patient is classified positive as soon as the model identifies a suspicious instance in its corresponding bag of instances. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, the whole bag is classified positive, otherwise it's classified negative. Letting the top-$1$ instance decide for the whole bag might be too sensitive. Immagine there exists different degrees of severity among positive instances. Looking only at the top-$1$ instance will correctly identify the most severe positive instances, but miss the less severe ones, which might be just as important for the final classification. This motivates the introduction of a hyperparameter $k$ and force the model to look for at least $k$ positive instances in positive bags, instead of only $1$.
 
 	\subsection{Extended  MIL Assumption} 
 	
-	As explained above, the standard MIL assumption implies that a patient is classified \emph{positive} as soon as the model identifies a suspicious instance in it. During training, it assumes there must be at least $1$ \emph{positive} instance for a \emph{positive} patient. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, it classifies the entire patient as positive. During testing, instead of letting the top-$1$ instance decide for the whole patient, it makes more sense to derive the patient's prediction by looking at its top-$k$ instances' probabilities.\\
+	Introducing this new hyperparameter $k$ is equivalent to extend the standard MIL assumption: positive patients must have at least $k$ positive instances, and negative patients must still have all their instances negative.\\
 	\\
-	The first experiments tended to confirm that MIL performances were sensitive to the value of the top-$k$ parameter. Using a fixed top-$k$, however, does not generalize well, since different patients have different numbers of instances, hence different numbers of suspicious instances. In order to account for this, the interested reader can introduce a percentage-based top-$k$ values by looking at $ max(m, \text{ceil}(k\% \text{ of instances})) $ where $m$ is a new hyperparameter that controls the minimum number of instances to aggregate for the final prediction.
-
+	Now that we've extended the scope of the model, we need to come up with a strategy to aggregate multiple instances' probabilities into a single probability at the patient level. The simplest form of aggregation is to apply a \textit{max} over instances’ probabilities. But as we pointed out in the previous section, this has the adervse effect of letting the top instance decide for the whole bag. Instead, we might want to consider taking the \textit{mean} probability of the top-$k$ instances. Indeed, there are reason to think that $n$ consecutive instances with high probabilities is a different biomarker than $1$ instance with high probability, followed by $n-1$ instances with probabilities close to zero. Taking the mean probability would allow to distinguish these two cases.\\
+	\\
+	The first experiments tended to confirm that MIL performances were sensitive to the value of the top-$k$ parameter. Using a fixed top-$k$, however, does not generalize well, since different patients have different numbers of instances, hence different numbers of suspicious instances. In order to account for this, the interested reader can introduce a percentage-based top-$k$ values by looking at $$ \max \left(m, \lceil k\% \text{ of instances}\rceil\right) $$ where $m$ is a new hyperparameter that controls the minimum number of instances to aggregate for the final prediction.
+	
 	\subsection{Taking More Tiles into Consideration}
 	
-	top-$k$ \& bottom-$k$
+	According to \cite{owkin}, bottom-$k$ instances are the regions “\textit{which best support the absence of the class}” and could be just as useful as top-$k$ instances to determine the patient label. Based on these findings, I decided to take the bottom-$k$ probabilities into account as well when deriving a patient's probability.\\
+	\\
+	If bottom-$k$ instances are just as useful as top-$k$ instances to determine the patient label, there are reason to believe that taking all instance into consideration when performing patient classification and let the model identify useful instances itself could lead to improved results. This is precisely what we do in the following section.
 	
-	\subsection{Taking All Tiles into Consideration}
-
+	\section{Taking All Tiles into Consideration}
 	
-	\section{Architecture}
+	quick sentence to describe what we're about to try: do better than simply mean probability + deplacer le focus des proba vers les embeddings
+	
+	\subsection{Architecture}
 	
 	We start from a simple baseline and we evaluate different modifications.
 	For each configuration, we run 10 trainings. Each training has its own seed for initializing the model and splitting the dataset (50/50 split). The 10 seeds are kept the same for each configuration. Each model is trained for 40 epochs with a batch size of 16, resulting in 5 batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the 10 best values of each training, and again average this over all 10 trainings (the average is thus taken over 100 values). We always report 95\% confidence intervals.
 	
 	\subsection{Baseline}
 	
-	\begin{figure}[t]
+	\begin{figure}[h!]
 		\begin{center}
 			\includegraphics[width=0.9\linewidth]{fig/graphic2.pdf}
 		\end{center}
@@ -279,7 +284,6 @@ We posit that selecting only a small subset of images provides some regularizati
 	Future work: dilated ResNet ?\\
 	Future work: aggregate embeddings using a recurrent neural network / self-attention encoder?
 	
-	\clearpage
 	{\small
 		\bibliographystyle{unsrt}
 		\bibliography{egbib}
