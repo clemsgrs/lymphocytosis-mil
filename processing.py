@@ -5,7 +5,7 @@ from typing import Tuple
 
 
 class TopKProcessor:
-    def __init__(self, topk: int = 1,aggregation: str = 'max'):
+    def __init__(self, topk: int = 1, aggregation: str = 'max'):
         self.topk = topk
         assert aggregation in ['max', 'mean']
         self.aggregation_func = np.amax if aggregation == 'max' else np.mean

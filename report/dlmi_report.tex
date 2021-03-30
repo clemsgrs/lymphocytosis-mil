@@ -101,7 +101,8 @@
 	
 	\section{Methodology}
 	
-	\subsection{Standard MIL Assumption} 
+	\subsection{Standard MIL Assumption}
+	\label{standardMIL}
 	
 	Under the standard MIL assumption, \emph{positive} patients must contain at least one instance classified as \emph{positive}, while \emph{negative} patients, instead, must have all their instances classified as \emph{negative}.\\
 	\\
@@ -119,23 +120,31 @@
 	 \\
 	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.\\
 	 \\
-	The standard MIL assumption implies that a patient is classified positive as soon as the model identifies a suspicious instance in its corresponding bag of instances. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, the whole bag is classified positive, otherwise it's classified negative. Letting the top-$1$ instance decide for the whole bag might be too sensitive. Immagine there exists different degrees of severity among positive instances. Looking only at the top-$1$ instance will correctly identify the most severe positive instances, but miss the less severe ones, which might be just as important for the final classification. This motivates the introduction of a hyperparameter $k$ and force the model to look for at least $k$ positive instances in positive bags, instead of only $1$.
-
-	\subsection{Extended  MIL Assumption} 
+	The standard MIL assumption implies that a patient is classified positive as soon as the model identifies a suspicious instance in its corresponding bag of instances. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, the whole bag is classified positive, otherwise it's classified negative. Letting the top-$1$ instance decide for the whole bag might be too sensitive. Immagine there exists different degrees of severity among positive instances. Looking only at the top-$1$ instance will correctly identify the most severe positive instances, but miss the less severe ones, which might be just as important for the final classification. 
 	
-	Introducing this new hyperparameter $k$ is equivalent to extend the standard MIL assumption: positive patients must have at least $k$ positive instances, and negative patients must still have all their instances negative.\\
+	\subsection{Extending  the Scope of the Model} 
+	\label{extendedMIL}
+	
+	In order to deal with the limitation highlighted in the previous section, wcame up with two different idead:
+	
+	\begin{itemize}
+		\item extend the standard MIL assumption by introducing of a hyperparameter $k_{\text{train}}$ which forces the model to look for at least $k_{\text{train}}$ positive instances in positive bags, instead of only $1$
+		\item still train with top-$k = 1$, but introduce a hyperparameter $k_{\text{agg}}$ to control the number of instances to aggregate for the final prediction.
+	\end{itemize}
+	
+	\noindent
+	Both ideas extend the scope of the model as we no longer let one instance decide for the label assigned to a patient. When taking more instances into account, one need to come up with a strategy to aggregate their probabilities into a single patient-level probability. As we pointed out in the previous section, applying a \textit{max} over instances’ probabilities has the adervse effect of letting the top instance decide for the whole bag. Instead, we might want to consider taking the \textit{mean} probability of the top-$k$ instances. Indeed, there are reason to think that $n$ consecutive instances with high probabilities is a different biomarker than $1$ instance with high probability, followed by $n-1$ instances with probabilities close to zero. Taking the mean probability would allow to distinguish these two cases.\\
 	\\
-	Now that we've extended the scope of the model, we need to come up with a strategy to aggregate multiple instances' probabilities into a single probability at the patient level. The simplest form of aggregation is to apply a \textit{max} over instances’ probabilities. But as we pointed out in the previous section, this has the adervse effect of letting the top instance decide for the whole bag. Instead, we might want to consider taking the \textit{mean} probability of the top-$k$ instances. Indeed, there are reason to think that $n$ consecutive instances with high probabilities is a different biomarker than $1$ instance with high probability, followed by $n-1$ instances with probabilities close to zero. Taking the mean probability would allow to distinguish these two cases.\\
-	\\
-	The first experiments tended to confirm that MIL performances were sensitive to the value of the top-$k$ parameter. Using a fixed top-$k$, however, does not generalize well, since different patients have different numbers of instances, hence different numbers of suspicious instances. In order to account for this, the interested reader can introduce a percentage-based top-$k$ values by looking at $$ \max \left(m, \lceil k\% \text{ of instances}\rceil\right) $$ where $m$ is a new hyperparameter that controls the minimum number of instances to aggregate for the final prediction.
+	The experiments conducted tend to confirm that the performances of our model were sensitive to the value of both $k_{\text{train}}$ and $k_{\text{agg}}$ parameters. Using a fixed top-$k$, however, does not generalize well, since different patients have different numbers of instances, hence different numbers of suspicious instances. In order to account for this, one can introduce percentage-based $k_{\text{train}}$ - $k_{\text{agg}}$ values by looking at $$ \max \left(m, \lceil k\% \text{ of instances}\rceil\right) $$ where $m$ is a new hyperparameter that controls the minimum number of instances to aggregate for the final prediction. Given the limited time of the Kaggle challenge, we didn't implent this idea, but encourage the interested reader to do so.
 	
 	\subsection{Taking More Tiles into Consideration}
+	\label{topbottom}
 	
-	According to \cite{owkin}, bottom-$k$ instances are the regions “\textit{which best support the absence of the class}” and could be just as useful as top-$k$ instances to determine the patient label. Based on these findings, I decided to take the bottom-$k$ probabilities into account as well when deriving a patient's probability.\\
+	According to \cite{owkin}, bottom-$k$ instances are the regions “\textit{which best support the absence of the class}” and could be just as useful as top-$k$ instances to determine the patient label. Indeed, we can expect the bottom-$k$ instances of a positive patient to have a different morphological aspsect than that of a negative patient, which could help refining the lymphocytosis diagnosis. Based on these findings, we decided to take the bottom-$k$ probabilities into account as well when deriving a patient's probability, computing the average probability on the $k_{\text{agg}}$ top instances plus the $k_{\text{agg}}$ bottom intances.\\
 	\\
-	If bottom-$k$ instances are just as useful as top-$k$ instances to determine the patient label, there are reason to believe that taking all instance into consideration when performing patient classification and let the model identify useful instances itself could lead to improved results. This is precisely what we do in the following section.
+	Results suggest bottom-$k$ instances are just as useful as top-$k$ instances to determine the patient label. Hence, there are reasons to believe that taking all instance into consideration and letting the model identify useful instances for classification could lead to improved results. This is precisely what we investigate in the following section.
 	
-	\section{Taking All Tiles into Consideration}
+	\section{Taking All Instances into Consideration}
 	
 	quick sentence to describe what we're about to try: do better than simply mean probability + deplacer le focus des proba vers les embeddings
 	
@@ -269,24 +278,38 @@ In the previous sections, when doing one training step, we used all the images o
 In this experiment, we use only a small random subset of image per patient during each training step. 
 We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this as the easy, positive images has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information.
 
-	\section{Results}
-	
-	\section{Explainability}
-	\begin{figure}[t]
-		\begin{center}
-			\includegraphics[width=0.7\linewidth]{fig/explainable1}
-		\end{center}
-		\caption{Predictions and images for 16 patients from the validation set. The patients where not cherry-picked. For each patient, a red left border indicates a positive ground truth label while green indicates a negative one. For each lymphocyte image, we provide on the left the $4\times 4$ predictions of the network. White means a score of one and black a score of 0.}
-		\label{fig:resnet}
-	\end{figure}
-	
-	\section{Conclusion}
-	Future work: dilated ResNet ?\\
-	Future work: aggregate embeddings using a recurrent neural network / self-attention encoder?
-	
-	{\small
-		\bibliographystyle{unsrt}
-		\bibliography{egbib}
-	}
+\section{Results}
+
+\section{Explainability}
+
+Multiple instance learning is very handy as it provides different ways to visualize what the model learned. This is of an inestimable value as deep learning models are often criticized for their lack of explainability. They are frequently referred to as \textit{black boxes} in the sense that one can’t really inspect how they end up predicting one thing instead of another. Summarizing what is discussed in Sections \ref{standardMIL} to \ref{topbottom}, the final classification of a patient is the result of several consecutive steps:
+
+\begin{itemize}
+	\itemsep-0.1em
+	\item an inference step mapping each input instance to a probability
+	\item a ranking step sorting instances by decreasing probability
+	\item a learning step comparing the $k_{\text{train}}$ instances probabilities patient labels to update the model’s weights
+	\item an aggregation step combining $k_{\text{agg}}$ probabilities into a single prediction
+\end{itemize}
+
+\noindent
+Keeping track of instances probabilities allows deep inspection of the workings of our models. Indeed, comparing instances our model identfies positive with those it identifies negative can reveal which visual patterns the model uses to discriminate between reactive and tumoral lymphocytosis. For lack of time, we didn't conduct this analysis.
+
+\begin{figure}[t]
+	\begin{center}
+		\includegraphics[width=0.7\linewidth]{fig/explainable1}
+	\end{center}
+	\caption{Predictions and images for 16 patients from the validation set. The patients where not cherry-picked. For each patient, a red left border indicates a positive ground truth label while green indicates a negative one. For each lymphocyte image, we provide on the left the $4\times 4$ predictions of the network. White means a score of one and black a score of 0.}
+	\label{fig:resnet}
+\end{figure}
+
+\section{Conclusion}
+Future work: dilated ResNet ?\\
+Future work: aggregate embeddings using a recurrent neural network / self-attention encoder?
+
+{\small
+	\bibliographystyle{unsrt}
+	\bibliography{egbib}
+}
 
 \end{document}
