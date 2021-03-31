@@ -98,17 +98,17 @@
 	\section{Methodology}
 	\label{sec:method}
 	
-	\subsection{Standard MIL Assumption}
+	\subsection{Standard MI Assumption}
 	\label{standardMIL}
 	
-	Under the standard MIL assumption, \emph{positive} patients must contain at least one instance classified as \emph{positive}, while \emph{negative} patients, instead, must have all their instances classified as \emph{negative}.\\
+	Under the standard MI assumption \cite{stdMIL1, stdMIL2}, \emph{positive} patients must contain at least one instance classified as \emph{positive}, while \emph{negative} patients, instead, must have all their instances classified as \emph{negative}.\\
 	\\
-	The full pipeline is described on Figure \ref{fig:mil_pipeline}. Each forward + backward pass can be broken down into two consecutive stages: 
+	A simple way to model this is described on Figure \ref{fig:mil_pipeline}. Each forward + backward pass can be broken down into two consecutive stages: 
 	
 	\begin{itemize}
 		\setlength\itemsep{-.0em}
 		\item the \emph{inference} phase: during \emph{inference}, the models' weights are frozen. Each instance is run through the network and assigned a number between $0$ and $1$: the more likely an instance to indicate tumoral lymphocytosis, the closer the number assigned to $1$. Once all the instances of a patient have been processed, they can be ranked according to their probability of being \emph{positive}. For each patient, the top-$1$ instance is selected for the second stage: the \emph{learning} phase.
-		\item the \emph{learning} phase: we now allow the models' weights to be updated. Given the standard MIL assumption detailed above, one can expect the top-$1$ instance of a \emph{positive} patient to be \emph{positive}, and the top-$1$ instance of a \emph{negative} patient to be \emph{negative}. Hence, as we run the top-$1$ instance through the network, we assign them the label of the patient they come from and update the weights accordingly: the network adjusts its weights in order to assign high probabilities to the top-$1$ instances coming from positive patients, while keeping low probabilities for the top-$1$ instances in negative patients. 
+		\item the \emph{learning} phase: we now allow the models' weights to be updated. Given the standard MI assumption detailed above, one can expect the top-$1$ instance of a \emph{positive} patient to be \emph{positive}, and the top-$1$ instance of a \emph{negative} patient to be \emph{negative}. Hence, as we run the top-$1$ instance through the network, we assign them the label of the patient they come from and update the weights accordingly: the network adjusts its weights in order to assign high probabilities to the top-$1$ instances coming from positive patients, while keeping low probabilities for the top-$1$ instances in negative patients. 
 	\end{itemize}
 
 	\begin{figure*}[h!]
@@ -122,11 +122,11 @@
 	\noindent
 	 At this stage, you might be wondering ``\textit{how this model converges} ?". It is true that it is not obvious as the model is initialized with ImageNet pre-trained weights, hence there's not reason to believe the model will assign high probabilities to the true positive instances, and low probabilities to true negative instances. And actually, the model does start by assigning random probabilities to each instances!  \\
 	 \\
-	 To understand how the model gradually learns to discriminate positive instances from negative ones, we need to focus on negative patients, who play a key role in the early stages of training. Under the standard MIL assumption , we know these patients must have all their instances classified as negative. At the end of the first \textit{inference} phase, the model has assigned these instances random probabilities, which can be either high or low. Hence, the top-$1$ instance for negative patient is random. I claim that this doesn't matter. Let me explain you why. What's important is what happens during the first \textit{learning} phase: for each negative patient, we have a (random) instance, which is negative. The model must adjust its weights to assign lower probabilities to each negative instances, such that at the following \textit{inference} step, all instances that look similar to negative instances will be assigned lower probabilities. As a result, all negative instances start to be assigned low probabilities, and positive instances will srand out, with higher probabilities. At this point, the top-$1$ instance of a positive patient is more likely to be a true positive. And the model will adjust its weights to assign higher probabilities to this type of instance.\\
+	 To understand how the model gradually learns to discriminate positive instances from negative ones, we need to focus on negative patients, who play a key role in the early stages of training. Under the standard MI assumption , we know these patients must have all their instances classified as negative. At the end of the first \textit{inference} phase, the model has assigned these instances random probabilities, which can be either high or low. Hence, the top-$1$ instance for negative patient is random. I claim that this doesn't matter. Let me explain you why. What's important is what happens during the first \textit{learning} phase: for each negative patient, we have a (random) instance, which is negative. The model must adjust its weights to assign lower probabilities to each negative instances, such that at the following \textit{inference} step, all instances that look similar to negative instances will be assigned lower probabilities. As a result, all negative instances start to be assigned low probabilities, and positive instances will srand out, with higher probabilities. At this point, the top-$1$ instance of a positive patient is more likely to be a true positive. And the model will adjust its weights to assign higher probabilities to this type of instance.\\
 	 \\
 	 This simplified reasoning allows to understand	how the model gently learns to discriminate suspicious instances from non-suspicious ones, and automatically infers fine-grained information from coarse-grained labels.\\
 	 \\
-	The standard MIL assumption implies that a patient is classified positive as soon as the model identifies a suspicious instance in its corresponding bag of instances. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, the whole bag is classified positive, otherwise it's classified negative. Letting the top-$1$ instance decide for the whole bag might be too sensitive. Immagine there exists different degrees of severity among positive instances. Looking only at the top-$1$ instance will correctly identify the most severe positive instances, but miss the less severe ones, which might be just as important for the final classification. 
+	The standard MI assumption implies that a patient is classified positive as soon as the model identifies a suspicious instance in its corresponding bag of instances. During testing, if the top-$1$ instance probability is above the classification threshold $\tau_{class}$, the whole bag is classified positive, otherwise it's classified negative. Letting the top-$1$ instance decide for the whole bag might be too sensitive. Immagine there exists different degrees of severity among positive instances. Looking only at the top-$1$ instance will correctly identify the most severe positive instances, but miss the less severe ones, which might be just as important for the final classification. 
 	
 	\subsection{Extending  the Scope of the Model} 
 	\label{extendedMIL}
@@ -134,7 +134,7 @@
 	In order to deal with the limitation highlighted in the previous section, wcame up with two different idead:
 	
 	\begin{itemize}
-		\item extend the standard MIL assumption by introducing of a hyperparameter $k_{\text{train}}$ which forces the model to look for at least $k_{\text{train}}$ positive instances in positive bags, instead of only $1$
+		\item extend the standard MI assumption by introducing of a hyperparameter $k_{\text{train}}$ which forces the model to look for at least $k_{\text{train}}$ positive instances in positive bags, instead of only $1$
 		\item still train with top-$k = 1$, but introduce a hyperparameter $k_{\text{agg}}$ to control the number of instances to aggregate for the final prediction.
 	\end{itemize}
 	
@@ -187,10 +187,10 @@
 	\begin{table}[h]
 		\renewcommand\tablename{Pseudo-code}
 		\begin{Verbatim}[fontsize=\footnotesize, samepage=true, frame=single]
-			logits = conv(features) # 1 channel
-			weights = bn(logits.detach())
-			weighted_logits = weights * logits
-			y = sigmoid(weighted_logits.sum()/weights.sum())
+logits = conv(features) # 1 channel
+weights = bn(logits.detach())
+weighted_logits = weights * logits
+y = sigmoid(weighted_logits.sum()/weights.sum())
 		\end{Verbatim}
 		\caption{PyTorch-like pseudo-code for our custom aggregation function}
 		\label{alg2}
@@ -263,23 +263,23 @@
 	\begin{table}[h]
 		\renewcommand\tablename{Pseudo-code}
 		\begin{Verbatim}[fontsize=\footnotesize, samepage=true, frame=single]
-			B, 3, H, W = image_batch.shape
-			max_forward_size = 512
-			max_backward_size = 512
-			features = []
-			i = 0
-			# forward images without keeping gradients
-			with torch.no_grad():
-			while i < B - max_backward_size:
-			j = min(i+max_forward_size,
-			num_images-max_backward_size)
-			features.append(backbone(images[i:j]))
-			i = j
-			# forward image with gradients
-			features.append(backbone(images[i:]))
-			# Note: the images are supposed to be shuffled
-			# so that the subset for which the gradients
-			# are kept is random.
+B, 3, H, W = image_batch.shape
+max_forward_size = 512
+max_backward_size = 512
+features = []
+i = 0
+# forward images without keeping gradients
+with torch.no_grad():
+while i < B - max_backward_size:
+j = min(i+max_forward_size,
+num_images-max_backward_size)
+features.append(backbone(images[i:j]))
+i = j
+# forward image with gradients
+features.append(backbone(images[i:]))
+# Note: the images are supposed to be shuffled
+# so that the subset for which the gradients
+# are kept is random.
 		\end{Verbatim}
 		\caption{PyTorch-like pseudo-code for propagating the gradients through only a subset of the images, in order to not run out of GPU memory.}
 		\label{alg1}
