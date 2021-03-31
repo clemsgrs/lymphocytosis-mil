@@ -143,7 +143,7 @@
 	\\
 	The experiments conducted tend to confirm that the performances of our model were sensitive to the value of both $k_{\text{train}}$ and $k_{\text{agg}}$ parameters. Using a fixed top-$k$, however, does not generalize well, since different patients have different numbers of instances, hence different numbers of suspicious instances. In order to account for this, one can introduce percentage-based $k_{\text{train}}$ - $k_{\text{agg}}$ values by looking at $$ \max \left(m, \lceil k\% \text{ of instances}\rceil\right) $$ where $m$ is a new hyperparameter that controls the minimum number of instances to aggregate for the final prediction. Given the limited time of the Kaggle challenge, we didn't implent this idea, but encourage the interested reader to do so.
 	
-	\subsection{Taking More Tiles into Consideration}
+	\subsection{Taking More Instances into Consideration}
 	\label{topbottom}
 	
 	According to \cite{owkin}, bottom-$k$ instances are the regions “\textit{which best support the absence of the class}” and could be just as useful as top-$k$ instances to determine the patient label. Indeed, we can expect the bottom-$k$ instances of a positive patient to have a different morphological aspsect than that of a negative patient, which could help refining the lymphocytosis diagnosis. Based on these findings, we decided to take the bottom-$k$ probabilities into account as well when deriving a patient's probability, computing the average probability on the $k_{\text{agg}}$ top instances plus the $k_{\text{agg}}$ bottom intances.\\
