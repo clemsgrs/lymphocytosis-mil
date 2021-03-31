@@ -30,13 +30,13 @@ std = torch.tensor([0.1917, 0.2156, 0.0917])
 if params.center_crop:
     t = transforms.Compose([
         transforms.CenterCrop(112),
-        transforms.Normalize(mean, std),
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
     ])
 else:
     t = transforms.Compose([
+        transforms.ToTensor(),
         transforms.Normalize(mean, std),
-        transforms.ToTensor()
     ])
 
 ### TESTING
