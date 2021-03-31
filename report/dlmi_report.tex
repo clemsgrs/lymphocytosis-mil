@@ -160,7 +160,7 @@
 	\subsection{Architecture}
 	
 	We start from a simple baseline and we evaluate different modifications.
-	For each configuration, we run $10$ trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). We always report $95\%$ confidence intervals.
+	For each configuration, we run $10$ trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best validation values obtained during each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). The reported values thus slightly underestimate the best performance of the network, obtained by taking the top-1 value of each training instead of the top-10. We always report $95\%$ confidence intervals over the 100 values recorded during this process.
 	
 	\subsection{Baseline}
 	
