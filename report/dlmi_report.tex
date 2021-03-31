@@ -151,11 +151,10 @@
 	Results suggest bottom-$k$ instances are just as useful as top-$k$ instances to determine the patient label. Hence, there are reasons to believe that taking all instance into consideration and letting the model identify useful instances for classification could lead to improved results. This is precisely what we investigate in the following section.
 	
 	\subsection{Taking All Instances into Consideration}
+	\label{sec:custom}
 	
-	Instead of only aggregating the model's output on a subset of instances into a single patient-level quantity, we wanted to design a custom aggreagtion function that would take all instances into consideration.
-	
-	\subsubsection{Theoretical Overview}
-	
+	Instead of only aggregating the model's output on a subset of instances into a single patient-level quantity, we design a custom aggreagtion function that takes all instances into consideration.\\
+	\\
 	Let us denote all the predictions (logits) for patient $j$ by $\ell_i^j$, $\: i=1 \dots n_j$.
 	To aggregate these predictions, we seek to define some weights $\alpha_i^j \geq 0$ such that we can compute the final prediction logit for patient $j$ by
 	$$\ell^j = \sum_{i=1}^{n_j} \alpha_i^j \ell_i^j$$
@@ -204,18 +203,49 @@
 		\caption{The distribution of the batch normalized logits over a bag is shown in blue. The red sigmoid shows the weight that is associated to each logit. The smaller the logit, the smaller the weight.}
 		\label{fig:aggreg}
 	\end{figure}
+
+	\section{Results}
 	
-	\subsubsection{Practical Implementation}
+	We start with the simple model that only looks at the top-$1$ instance, then we evaluate how the different ideas successively described in Section \ref{sec:method} impact our performances. All our methods share a common structure: we adopt a simple and explainable architecture composed of a ResNet \cite{resnet} backbone followed by an aggregation module. The ablation study is solely conducted for the custom aggreagtion module we designed, as it ended up outperforming all other approaches by a significant marging.\\
+	\\
+	To compare the different methods fairly, we always run $10$ different trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). We always report $95\%$ confidence intervals.
+
+	\subsection{Augmentations}
+	
+	As the images are centered on a lymphocytes, we always apply a center crop of size $112$ to all images (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
+
+	\subsection{Backbone Choice}
+	
+	We compared three backbones: ResNet$18$, ResNet$34$ and ResNet$50$ \cite{resnet}. We also tried a more recent backbone, EfficientNet \cite{efn}, but did not obtain good results. Results for the custom aggregation are summarized in Figure \ref{fig:resnet}. ResNet$18$ achieves the best validation balanced accuracy. This is also what we observe for other aggregation functions. We use ResNet$18$ for all our subsequent experiments.
+	
+	\begin{figure}[h]
+		\begin{center}
+			\includegraphics[width=0.47\linewidth]{fig/resnets_bal_acc.pdf}
+			\includegraphics[width=0.47\linewidth]{fig/resnets_val_loss.pdf}
+		\end{center}
+		\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate $95\%$ confidence intervals. Shallower seems to be better but the results are not very significative.}
+		\label{fig:resnet}
+	\end{figure}
+
+	\subsection{Working on a Subset of Instances}
+	
+	add top-$1$, top-$k$, top-$k$ and bottom-$k$ results
+	
+	\subsection{Working on a All Instances}
+	
+	We now describe the practical implementation of the custom aggregation module discussed in Section \ref{sec:custom}. An overview of the pipeline is given in Figure \ref{fig:overview}.
+	
+	\vspace{2mm}
 	
 	\begin{figure}[h!]
 		\begin{center}
 			\includegraphics[width=0.9\linewidth]{fig/graphic3.pdf}
 		\end{center}
-		\caption{Baseline architecture.}
+		\caption{Custom Aggregation Pipeline}
 		\label{fig:overview}
 	\end{figure}
 	
-	We adopt a simple and explainable architecture composed of a ResNet \cite{resnet} backbone followed by an aggregation module.
+	\noindent
 	For a given batch of patients, we take all their images and stack them into a batch.
 	This batch is passed independently the backbone, without global pooling. 
 	A $1\times 1$ convolution with one output channel is then applied to the resulting feature maps to obtain pixelwise prediction logits.
@@ -252,41 +282,10 @@
 		\caption{PyTorch-like pseudo-code for propagating the gradients through only a subset of the images, in order to not run out of GPU memory.}
 		\label{alg1}
 	\end{table}
-
-	\section{Results}
 	
-	We start with the simple model that only looks at the top-$1$ instance, then we evaluate how the different ideas successively described in Section \ref{sec:method} impact our performances. The ablation study is solely conducted for the custom aggreagtion function we designed, as it ended up outperforming all other approaches by a significant marging.\\
-	\\
-	To compare the different methods fairly, we always run $10$ different trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). We always report $95\%$ confidence intervals.
-
-	\subsection{Augmentations}
-	
-	As the images are centered on a lymphocytes, we always apply a center crop of size $112$ to all images (training, validation and testing). Initial experiments showed that this significantly improves the accuracy and reduces the computational resources. We use vertical and horizontal random flipping. We tried to use more agressive augmentations such as affine transforms and color jittering but this heavily impaired the accuracy.
-
-	\subsection{Backbone Choice}
-	
-	We compared three backbones: ResNet$18$, ResNet$34$ and ResNet$50$ \cite{resnet}. We also tried a more recent backbone, EfficientNet \cite{efn}, but did not obtain good results. Results for the custom aggregation are summarized in Figure \ref{fig:resnet}. ResNet$18$ achieves the best validation balanced accuracy. This is also what we observe for other aggregation functions. We use ResNet$18$ for all our subsequent experiments.
-
-	\begin{figure}[h]
-		\begin{center}
-			\includegraphics[width=0.47\linewidth]{fig/resnets_bal_acc.pdf}
-			\includegraphics[width=0.47\linewidth]{fig/resnets_val_loss.pdf}
-		\end{center}
-		\caption{Impact of ResNet depth on validation loss and balanced accuracy. The black bars indicate $95\%$ confidence intervals. Shallower seems to be better but the results are not very significative.}
-		\label{fig:resnet}
-	\end{figure}
-	
-	\subsection{Working on a Subset of Instances}
-	
-	add top-$1$, top-$k$, top-$k$ and bottom-$k$ results
-	
-	\subsection{Working on a All Instances}
-	
-	\subsection{Number of images}
-	
-	In the previous sections, when doing one training step, we used all the images of each patient and aggregated their logits.
-	In this experiment, we use only a small random subset of image per patient during each training step. 
-	We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this problem, as the easy positive image has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information. This idea is similar to hard negative mining, and could be called ``easy positive avoidance".\\
+	\noindent
+	\textbf{Number of images}\\	
+	In the upcoming experiment, we  no longer all the images of each patient and aggregate their logits, but only use a small random subset of image per patient during each training step. 	We posit that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this problem, as the easy positive image has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information. This idea is similar to hard negative mining, and could be called ``easy positive avoidance".\\
 	\\
 	Our wining submission was obtained with this strategy but Figure \ref{fig:num_img} shows that it actually worsened the results when evaluated over 10 runs \footnote{When training with 10 images per patient per batch, we trained for 120 epochs instead of 40, but performed evaluation only every third epoch (so that the number of evaluations is kept the same).}.
 	
