@@ -32,7 +32,7 @@ data_module = TestDataModule(params)
 data_module.setup()
 test_dataset = data_module.test_dataset
 
-topk_processor = TopKProcessor(topk=params.topk, aggregation=params.aggregation)
+topk_processor = TopKProcessor(topk=params.topk_agg, aggregation=params.aggregation)
 
 # load best weights from training (based on params.tracking value)
 # model = create_model(params)
