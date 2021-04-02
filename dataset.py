@@ -44,13 +44,13 @@ class MILImageDataset(torch.utils.data.Dataset):
 
 
 class LymphoDataModule():
-    def __init__(self, data_dir: str, num_workers: int = 1, val_size: float = 0.3, pct: bool = False, seed: int = 21, save_csv: bool = False):
+    def __init__(self, data_dir: str, val_size: float = 0.3, pct: bool = False, seed: int = 21, save_csv: bool = False, transforms: Callable = None):
         self.data_dir = data_dir
-        self.num_workers = num_workers
         self.val_size = val_size
         self.pct = pct
         self.seed = seed
         self.save_csv = save_csv
+        self.transforms = transforms
     
     def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']
@@ -87,17 +87,18 @@ class LymphoDataModule():
         else:
             train_df = train_df.reset_index()
             val_df = val_df.reset_index()
+        
         self.train_dataset, self.val_dataset = (
-            MILImageDataset(train_df, training=True),
-            MILImageDataset(val_df, training=True)
+            MILImageDataset(train_df, training=True, transform=self.transforms),
+            MILImageDataset(val_df, training=True, transform=self.transforms)
         )
 
 
 class TestDataModule():
-    def __init__(self, data_dir: str, num_workers: int = 1, save_csv: bool = False):
+    def __init__(self, data_dir: str, save_csv: bool = False, transforms: Callable = None):
         self.data_dir = data_dir
-        self.num_workers = num_workers
         self.save_csv = save_csv
+        self.transforms = transforms
     
     def get_tiles(self, row: pd.Series, phase: str):
         patient_id = row['id']
@@ -124,5 +125,5 @@ class TestDataModule():
         
         test_df = test_df.reset_index()
         self.test_dataset = (
-            MILImageDataset(test_df, training=False)
+            MILImageDataset(test_df, training=False, transform=self.transforms)
         )

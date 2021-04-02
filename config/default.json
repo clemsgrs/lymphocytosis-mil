@@ -1,6 +1,7 @@
 {
     "data_dir": "data/3md3070-dlmi/",
     "seed": 1,
+    "center_crop": true,
     "pct": false,
     "val_size": 0.5,
     "nepochs": 30,

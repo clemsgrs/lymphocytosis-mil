@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
+from torchvision import transforms
 import argparse
 import numpy as np
 import pandas as pd
@@ -27,7 +28,21 @@ for k, v in vars(params).items():
 print('-------------- End ----------------')
 print()
 
-data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, pct=params.pct, seed=params.seed)
+mean = torch.tensor([0.8183, 0.6977, 0.7034])
+std = torch.tensor([0.1917, 0.2156, 0.0917])
+if params.center_crop:
+    t = transforms.Compose([
+        transforms.CenterCrop(112),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ])
+else:
+    t = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std),
+    ])
+
+data_module = LymphoDataModule(params.data_dir, val_size=params.val_size, pct=params.pct, seed=params.seed, transforms=t)
 data_module.setup()
 train_dataset, val_dataset = data_module.train_dataset, data_module.val_dataset
 print()

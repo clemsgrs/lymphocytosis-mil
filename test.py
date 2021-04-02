@@ -25,10 +25,23 @@ for k, v in vars(params).items():
     print('%s: %s' % (str(k), str(v)))
 print('-------------- End ----------------')
 
+mean = torch.tensor([0.8183, 0.6977, 0.7034])
+std = torch.tensor([0.1917, 0.2156, 0.0917])
+if params.center_crop:
+    t = transforms.Compose([
+        transforms.CenterCrop(112),
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std)
+    ])
+else:
+    t = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean, std),
+    ])
 
 ### TESTING
 
-data_module = TestDataModule(params)
+data_module = TestDataModule(params.data_dir, save_csv=params.save_csv, transforms=t)
 data_module.setup()
 test_dataset = data_module.test_dataset
 

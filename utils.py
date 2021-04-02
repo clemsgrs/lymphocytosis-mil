@@ -32,7 +32,6 @@ def epoch_time(start_time, end_time):
 
 def run_inference(epoch, model, inference_dataset, criterion, topk_processor, params, threshold=0.5):
 
-    model.eval()
     epoch_loss = 0
     instance_indices = []
     probs = []
