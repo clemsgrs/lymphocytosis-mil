@@ -15,7 +15,6 @@
 \captionsetup{compatibility=false}
 \usepackage{graphicx}
 \usepackage{fancyvrb}
-\usepackage[utf8]{inputenc}
 
 \setlength{\abovecaptionskip}{-3pt plus 3pt minus 2pt}
 
@@ -52,56 +51,49 @@
 	\maketitle
 	
 	\begin{abstract}
-		In this report, we emphasize our work for the data challenge organized as part of the Deep Learning for Medical Imaging class. The goal of the challenge is to classify lymphocytosis from blood cells. Through iterations in model definition and data representation, we managed to get $0.96623$ balanced accuracy on the public leaderboard (rank 1).
+		In this report, we emphasize our work for the data challenge organized as part of the Deep Learning for Medical Imaging class. The goal of the challenge is to classify lymphocytosis from blood cells. Through iterations in model definition and data representation, we managed to get $0.96623$ classification accuracy on the academic leaderboard (rank 1).
 	\end{abstract}
 	
 	\vspace{-3mm}
 	
 	\section{Introduction}
 	
-	The goal of this challenge is to determine if a patient has a lymphoproliferative disorder – a type of cancer. A manifestation of this illness is an increased number of lymphocytes, called lymphocytosis. But lymphocytosis can also be caused by other conditions such as an infection or acute stress. Thus, we must determine whether a patient with lymphocytosis has cancer or not. To this end, the challenge provides a dataset of images of blood smears for 204 patiens. For each patient, we have access to dozens of images of lymphocytes, as well as the following clinical attributes: gender, age, and lymphocyte count.
-	If we assume that a single lymphocyte image can carry information that implies that the patient has cancer, then we can cast the challenge as a multiple instance learning problem.
-	The metric for this challenge is balanced accuracy, which is the arithmetic mean between sensitivity and specificity. This metric is better suited for imbalanced datasets than accuracy 
-	(this challenge is imbalanced as about 70\% of patients have label 1).
+	Lymphocytosis is an increase in the number or proportion of lymphocytes in the blood. It's a common finding, which can be either a reaction to infection or acute stress (reactive), or the manifestation of a lymphoproliferative disorder -- a type of cancer of the lymphocytes (tumoral). In clinical practice, the diagnosis as either reactive or tumoral is performed by trained pathologists who visually inspect blood cells under a microscope. The final decision also takes into consideration clinical attributes such as age, gender, and lymphocyte count. In spite of being relatively fast and affordable, lymphocytosis diagnisis lacks reproducibility between experts. Additional clinical tests are often required to confirm the malignant nature of the lymphocytes. However, this analysis is relatively expensive and time-consuming, and therefore is not performed for every patient in practice. In this context, automatic classification has the potential to provide accurate and reproducible diagnosis, saving precious time and ressources by quickly identifying which patient should be referred for flow cytometry analysis.
 	
-%	\section{Introduction}
-%	
-%	Lymphocytosis is an increase in the number or proportion of lymphocytes in the blood. It's a common finding, which can be either a reaction to infection or acute stress (reactive), or the manifestation of a lymphoproliferative disorder -- a type of cancer of the lymphocytes (tumoral). In clinical practice, the diagnosis as either reactive or tumoral is performed by trained pathologists who visually inspect blood cells under a microscope. The final decision also takes into consideration clinical attributes such as age, gender, and lymphocyte count. In spite of being relatively fast and affordable, lymphocytosis diagnisis lacks reproducibility between experts. Additional clinical tests are often required to confirm the malignant nature of the lymphocytes. However, this analysis is relatively expensive and time-consuming, and therefore is not performed for every patient in practice. In this context, automatic classification has the potential to provide accurate and reproducible diagnosis, saving precious time and ressources by quickly identifying which patient should be referred for flow cytometry analysis.
-%	
-%	\section{Problem Definiton}
-%	
-%	\subsection{Dataset}
-%	
-%	Blood smears and patient attributes were collected from $204$ patients from the routine hematology laboratory of the Lyon SudUniversity Hospital. All included patients have a lymphocyte count above $4\times10^9/L$. The blood smears were automatically produced by a Sysmex automat tool, and the nucleated cells were automatically photographed with a DM-96 device. The training set consists of $142$ patients ($44$ reactive and $98$ malignant cases), and the testing set of $42$ patients. For each patient, we have access to dozens of images of lymphocytes, as well as the following clinical attributes: gender, age, and lymphocyte count.
-%	
-%	\subsection{Evalutation Metric} 
-%	
-%	This challenge is evaluated on balanced accuracy (BA), which normalizes true positive (TP) and true negative (TN) predictions by the number of positive and negative samples, respectively. In particular, if one denotes false positives as FP and false negatives as FN, we have:
-%	
-%	\vspace{-2mm}
-%	
-%	\begin{equation*}
-%		\begin{aligned}
-%			\text{Sensitivity} & = \dfrac{\text{TP}}{\text{TP}+\text{FN}} ,\quad 
-%			\text{Specificity} & = \dfrac{\text{TN}}{\text{TN}+\text{FP}}\\
-%		\end{aligned}
-%	\end{equation*}
-%
-%	\begin{equation*}
-%		\begin{aligned}
-%			\text{BA} = \dfrac{\text{Sensitivity}+\text{Specificity}}{2}
-%		\end{aligned}
-%	\end{equation*}
-%		
-%	\vspace{2mm}
-%	
-%	\subsection{Weak Supervision through Multiple Instance Learning} 
-%	
-%	The idea of weakly supervised learning is to exploit coarse-grained annotations to automatically infer finer-grained information. Coarse-grained information is often readily available in the form of patient level labels, but finer grained annotations are more difficult to obtain. Without precise local annotations, classification models cannot be trained in a fully supervised manner. Therefore, various weakly supervised techniques have recently been developed to overcome this issue. One of these techniques relies on multiple instance learning (MIL), an existing framework largely used in classic computer vision that has recently showed state-of-the-art results in several medical imaging tasks \cite{hou_MIL}. \\
-%	\\
-%	Babenko \cite{mil} gives a good example to understand multiple instance learning. Imagine several people, each of them having a key chain that contains a few keys. Some of these people are able to enter a certain room, and some aren’t. The task is to predict whether or not a given key chain can open the door of that room. To solve this problem, one needs to find the exact key that is common to all the \textit{positive} key chains. If one can correctly identify this key, one can also correctly classify an entire key chain - \textit{positive} if it contains the required key, or \textit{negative} if it doesn't.\\
-%	\\
-%	Hence, the multiple instance learning framework allows the training of a classifier from weakly labeled data: instead of providing input-label pairs, labels $\ell_b$ are assigned to \emph{sets} or \emph{bags} of instances. In this setting, the true instance labels $\ell_i$ can be thought of as latent variables, as they are not known during training. In our case, we can assume that only a subset of the images available for a patient with tumoral lymphocytosis do carry the information necessary to correctly classify that patient. Identifying these special instances perfectly fits in the multiple instance learning framework.
+	\section{Problem Definiton}
+	
+	\subsection{Dataset}
+	
+	Blood smears and patient attributes were collected from $204$ patients from the routine hematology laboratory of the Lyon SudUniversity Hospital. All included patients have a lymphocyte count above $4\times10^9/L$. The blood smears were automatically produced by a Sysmex automat tool, and the nucleated cells were automatically photographed with a DM-96 device. The training set consists of $142$ patients ($44$ reactive and $98$ malignant cases), and the testing set of $42$ patients. For each patient, we have access to dozens of images of lymphocytes, as well as the following clinical attributes: gender, age, and lymphocyte count.
+	
+	\subsection{Evalutation Metric} 
+	
+	This challenge is evaluated on balanced accuracy (BA), which normalizes true positive (TP) and true negative (TN) predictions by the number of positive and negative samples, respectively. In particular, if one denotes false positives as FP and false negatives as FN, we have:
+	
+	\vspace{-2mm}
+	
+	\begin{equation*}
+		\begin{aligned}
+			\text{Sensitivity} & = \dfrac{\text{TP}}{\text{TP}+\text{FN}} ,\quad 
+			\text{Specificity} & = \dfrac{\text{TN}}{\text{TN}+\text{FP}}\\
+		\end{aligned}
+	\end{equation*}
+
+	\begin{equation*}
+		\begin{aligned}
+			\text{BA} = \dfrac{\text{Sensitivity}+\text{Specificity}}{2}
+		\end{aligned}
+	\end{equation*}
+		
+	\vspace{2mm}
+	
+	\subsection{Weak Supervision through Multiple Instance Learning} 
+	
+	The idea of weakly supervised learning is to exploit coarse-grained annotations to automatically infer finer-grained information. Coarse-grained information is often readily available in the form of patient level labels, but finer grained annotations are more difficult to obtain. Without precise local annotations, classification models cannot be trained in a fully supervised manner. Therefore, various weakly supervised techniques have recently been developed to overcome this issue. One of these techniques relies on multiple instance learning (MIL), an existing framework largely used in classic computer vision that has recently showed state-of-the-art results in several medical imaging tasks \cite{hou_MIL}. \\
+	\\
+	Babenko \cite{mil} gives a good example to understand multiple instance learning. Imagine several people, each of them having a key chain that contains a few keys. Some of these people are able to enter a certain room, and some aren’t. The task is to predict whether or not a given key chain can open the door of that room. To solve this problem, one needs to find the exact key that is common to all the \textit{positive} key chains. If one can correctly identify this key, one can also correctly classify an entire key chain - \textit{positive} if it contains the required key, or \textit{negative} if it doesn't.\\
+	\\
+	Hence, the multiple instance learning framework allows the training of a classifier from weakly labeled data: instead of providing input-label pairs, labels $\ell_b$ are assigned to \emph{sets} or \emph{bags} of instances. In this setting, the true instance labels $\ell_i$ can be thought of as latent variables, as they are not known during training. In our case, we can assume that only a subset of the images available for a patient with tumoral lymphocytosis do carry the information necessary to correctly classify that patient. Identifying these special instances perfectly fits in the multiple instance learning framework.
 
 	\section{Methodology}
 	\label{sec:method}
@@ -156,7 +148,7 @@
 	
 	According to \cite{owkin}, bottom-$k$ instances are the regions “\textit{which best support the absence of the class}” and could be just as useful as top-$k$ instances to determine the patient label. Indeed, we can expect the bottom-$k$ instances of a positive patient to have a different morphological aspsect than that of a negative patient, which could help refining the lymphocytosis diagnosis. Based on these findings, we decided to take the bottom-$k$ probabilities into account as well when deriving a patient's probability, computing the average probability on the $k_{\text{agg}}$ top instances plus the $k_{\text{agg}}$ bottom intances.\\
 	\\
-	Results presented in Section \ref{sec:topk_results} suggest aggregating top-$k$ with as bottom-$k$ instances to determine the patient label doesn't help. Instead of trying to hand-craft an aggregation function to identify which instances might be useful to determine the patient label, we design a novel approach to let the model identify by itself useful instances for classification, potentially taking all instances into consideration.
+	Results presented in Section \ref{sec:topk_results} suggest aggregating top-$k$ with as bottom-$k$ instances to determine the patient label doesn't help. Instead of trying to hand-craft an aggregation function to identify which instances might be useful to determine the patient label, we design a novel approach to let the model identify useful instances for classification, potentially taking all instances into consideration.
 	
 	\subsection{Taking All Instances into Consideration}
 	\label{sec:custom}
@@ -191,7 +183,6 @@
 	$$\mu = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \ell_i^j$$
 	$$V = \tfrac 1 {n_1+\dots+n_B} \sum_{j=1}^{B} \sum_{i=1}^{n_j} \left(\ell_i^j - \mu \right)^2$$
 	where $B$ is the batch size. Intuitively, $\alpha_i^j$ is small when $\ell_i^j$ is small compared to the rest of the batch, i.e, when it is likely to be a negative sample.
-	Figure \ref{fig:aggreg} shows the histogram of the logits as well as the weighting function.
 	
 	\begin{table}[h]
 		\renewcommand\tablename{Pseudo-code}
@@ -217,7 +208,7 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 	
 	We start with the simple model that only looks at the top-$1$ instance, then we evaluate how the different ideas successively described in Section \ref{sec:method} impact our performances. All our methods share a common structure: we adopt a simple and explainable architecture composed of a ResNet \cite{resnet} backbone followed by an aggregation module. The ablation study is solely conducted for the custom aggreagtion module we designed, as it ended up outperforming all other approaches by a significant marging.\\
 	\\
-	To compare the different methods fairly, we always run $10$ different trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values) -- except for part 3.3 where we only average the best validation balanced accuracy of each training. We always report $95\%$ confidence intervals.
+	To compare the different methods fairly, we always run $10$ different trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best values of each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). We always report $95\%$ confidence intervals.
 
 	\subsection{Augmentations}
 	
@@ -254,8 +245,6 @@ y = sigmoid(weighted_logits.sum()/weights.sum())
 	
 	\subsection{Working on a All Instances}
 	
-	We start from a simple baseline and we evaluate different modifications.
-	For each configuration, we run $10$ trainings. Each training has its own seed for initializing the model and splitting the dataset ($50/50$ split). The $10$ seeds are kept the same for each configuration. Each model is trained for $40$ epochs with a batch size of $16$, resulting in $5$ batches per epoch. Evaluation if performed at the end of every epoch. We always optimize with Adam and a learning rate of $10^{-4}$. When we report a metric for any configuration, we average the $10$ best validation values obtained during each training, and again average this over all $10$ trainings (the average is thus taken over $100$ values). The reported values thus slightly underestimate the best performance of the network, obtained by taking the top-1 value of each training instead of the top-10. We always report $95\%$ confidence intervals over the 100 values recorded during this process.
 	We now describe the practical implementation of the custom aggregation module discussed in Section \ref{sec:custom}. An overview of the pipeline is given in Figure \ref{fig:overview}.
 	
 	\vspace{2mm}
@@ -308,7 +297,7 @@ features.append(backbone(images[i:]))
 	\noindent
 	Then, we experiment by no longer taking all the images of each patient and aggregate their logits, but only using a small random subset of image per patient during each training step. We hypothesize that selecting only a small subset of images provides some regularization to the training process. Indeed, assume that for a given positive patient, one image is easily identified by the network as positive. In this case, the network can ignore the other images. By selecting only a small random subset of images, we avoid this problem, as the easy positive image has a high probability of not being selected. Note that we implicitely make the assumption that in the case of a positive patient, a large number of images contains positive information. This idea is similar to hard negative mining, and could be called ``easy positive avoidance".\\
 	\\
-	Our winning submission was obtained with this strategy but Figure \ref{fig:num_img} shows that it actually worsened the results when evaluated over 10 runs \footnote{When training with 10 images per patient per batch, we trained for 120 epochs instead of 40, but performed evaluation only every third epoch (so that the number of evaluations is kept the same).}.
+	Our wining submission was obtained with this strategy but Figure \ref{fig:num_img} shows that it actually worsened the results when evaluated over 10 runs \footnote{When training with 10 images per patient per batch, we trained for 120 epochs instead of 40, but performed evaluation only every third epoch (so that the number of evaluations is kept the same).}.
 	
 	\begin{figure}[t]
 		\begin{center}
@@ -327,14 +316,6 @@ features.append(backbone(images[i:]))
 		\bibliographystyle{unsrt}
 		\bibliography{egbib}
 	}
-
-	\begin{figure}[t]
-		\begin{center}
-			\includegraphics[width=0.7\linewidth]{fig/explainable1}
-		\end{center}
-		\caption{Predictions and images for 16 patients from the validation set. The patients where not cherry-picked. For each patient, a red left border indicates a positive ground truth label while green indicates a negative one. For each lymphocyte image, we provide on the left the $4\times 4$ predictions of the network. White means a score of one and black a score of 0.}
-		\label{fig:explaina}
-	\end{figure}
 
 \end{document}
 
