@@ -52,14 +52,14 @@
 	\maketitle
 	
 	\begin{abstract}
-		In this report, we emphasize our work for the data challenge organized as part of the Deep Learning for Medical Imaging class. The goal of the challenge is to classify lymphocytosis from blood cells. Through iterations in model definition and data representation, we managed to get $0.96623$ classification accuracy on the academic leaderboard (rank 1).
+		In this report, we emphasize our work for the data challenge organized as part of the Deep Learning for Medical Imaging class. The goal of the challenge is to classify lymphocytosis from blood cells. Through iterations in model definition and data representation, we managed to get $0.96623$ balanced accuracy on the public leaderboard (rank 1).
 	\end{abstract}
 	
 	\vspace{-3mm}
 	
 	\section{Introduction}
 	
-	The goal of this challenge is to determine if a patient has a lymphoproliferative disorder – a type of cancer. A mani- festation of this illness is an increased number of lympho- cytes, called lymphocytosis. But lymphocytosis can also be caused by other conditions such as an infection or acute stress. Thus, we must determine whether a patient with lym- phocytosis has cancer or not. To this end, the challenge provides a dataset of images of blood smears for 204 patiens. For each patient, we have access to dozens of images of lymphocytes, as well as the following clinical attributes: gender, age, and lymphocyte count.
+	The goal of this challenge is to determine if a patient has a lymphoproliferative disorder – a type of cancer. A manifestation of this illness is an increased number of lymphocytes, called lymphocytosis. But lymphocytosis can also be caused by other conditions such as an infection or acute stress. Thus, we must determine whether a patient with lymphocytosis has cancer or not. To this end, the challenge provides a dataset of images of blood smears for 204 patiens. For each patient, we have access to dozens of images of lymphocytes, as well as the following clinical attributes: gender, age, and lymphocyte count.
 	If we assume that a single lymphocyte image can carry information that implies that the patient has cancer, then we can cast the challenge as a multiple instance learning problem.
 	The metric for this challenge is balanced accuracy, which is the arithmetic mean between sensitivity and specificity. This metric is better suited for imbalanced datasets than accuracy 
 	(this challenge is imbalanced as about 70\% of patients have label 1).
